@@ -4,8 +4,8 @@
 export const PARAMS = {
   tickRate: 20,
   arena: {
-    width: 1200,
-    height: 800,
+    width: 1080,
+    height: 1920,
   },
   player: {
     /** Instant analog speed at stick rim. Players have no drift. */
@@ -21,8 +21,8 @@ export const PARAMS = {
   },
   dog: {
     radius: 20,
-    startX: 600,
-    startY: 400,
+    startX: 540,
+    startY: 960,
     /** Speed after spawn / after a tag reset. */
     initialSpeed: 70,
     /** Speed added per second while chasing, up to maxSpeed. */
@@ -40,7 +40,7 @@ export const PARAMS = {
   },
   ray: {
     hitWidth: 26,
-    maxDist: 900,
+    maxDist: 2200,
   },
 } as const;
 

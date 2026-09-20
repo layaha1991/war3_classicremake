@@ -18,6 +18,12 @@ function run(state: ReturnType<typeof createMatch>, frames: number, inputs: Para
 }
 
 describe("driftdog simulation", () => {
+  it("uses a portrait 1080 by 1920 arena with the dog in the center", () => {
+    expect(ARENA).toEqual({ width: 1080, height: 1920 });
+    expect(PARAMS.dog.startX).toBe(ARENA.width / 2);
+    expect(PARAMS.dog.startY).toBe(ARENA.height / 2);
+  });
+
   it("gives the ball to the first living player and keeps it off the ground when held", () => {
     let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 200, y: 200 });
     expect(state.players.a.hasBall).toBe(true);

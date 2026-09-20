@@ -15,14 +15,14 @@ import {
 import { sanitizeInput, sanitizeNickname } from "./sanitize-input.js";
 
 const SPAWNS = [
-  { x: 280, y: 400 },
-  { x: 920, y: 400 },
-  { x: 600, y: 220 },
-  { x: 600, y: 580 },
-  { x: 360, y: 240 },
-  { x: 840, y: 240 },
-  { x: 360, y: 560 },
-  { x: 840, y: 560 },
+  { x: 220, y: 420 },
+  { x: 860, y: 420 },
+  { x: 220, y: 1500 },
+  { x: 860, y: 1500 },
+  { x: 540, y: 280 },
+  { x: 540, y: 1640 },
+  { x: 160, y: 960 },
+  { x: 920, y: 960 },
 ];
 
 export class DriftDogRuntime {
