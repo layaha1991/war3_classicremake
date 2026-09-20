@@ -46,6 +46,10 @@ export function facingForInput(aim: Pick<StickState, "active" | "heading">): num
   return aim.active ? aim.heading : undefined;
 }
 
+export function blinkButtonLabel(cd: number): string {
+  return cd > 0.05 ? String(Math.ceil(cd)) : "閃";
+}
+
 export function readMoveInput(stick: StickState, facing?: number): PlayerInput {
   return {
     up: false,
@@ -83,17 +87,20 @@ export interface TouchPadController {
   moveOrigin: { x: number; y: number } | null;
   aimOrigin: { x: number; y: number } | null;
   consumeAimRelease(): StickState | undefined;
+  consumeBlink(): boolean;
+  setBlinkCd(cd: number): void;
   destroy(): void;
 }
 
 export function attachTouchPads(root: HTMLElement): TouchPadController {
   const wrap = document.createElement("div");
   wrap.className = "pads";
-  wrap.innerHTML = `<div class="pad pad-move" role="button" aria-label="移動"></div><div class="pad pad-aim" role="button" aria-label="傳球"></div>`;
+  wrap.innerHTML = `<div class="pad pad-move" role="button" aria-label="移動"></div><button class="pad-blink" type="button" aria-label="閃">閃</button><div class="pad pad-aim" role="button" aria-label="傳球"></div>`;
   root.append(wrap);
 
   const moveEl = wrap.querySelector(".pad-move") as HTMLElement;
   const aimEl = wrap.querySelector(".pad-aim") as HTMLElement;
+  const blinkEl = wrap.querySelector(".pad-blink") as HTMLButtonElement;
   const controller: TouchPadController = {
     move: idleStick,
     aim: idleStick,
@@ -104,11 +111,27 @@ export function attachTouchPads(root: HTMLElement): TouchPadController {
       pendingRelease = undefined;
       return released;
     },
+    consumeBlink() {
+      const fired = pendingBlink;
+      pendingBlink = false;
+      return fired;
+    },
+    setBlinkCd(cd: number) {
+      blinkEl.textContent = blinkButtonLabel(cd);
+      blinkEl.disabled = cd > 0.05;
+      blinkEl.classList.toggle("is-cooling", cd > 0.05);
+    },
     destroy() {
       wrap.remove();
     },
   };
   let pendingRelease: StickState | undefined;
+  let pendingBlink = false;
+  blinkEl.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    pendingBlink = true;
+  });
 
   const bind = (el: HTMLElement, side: StickSide) => {
     let pointerId: number | undefined;

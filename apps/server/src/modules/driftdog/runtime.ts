@@ -2,6 +2,7 @@ import {
   ARENA,
   PLAYABLE_HEIGHT,
   addPlayer,
+  blink,
   createMatch,
   DT,
   passBall,
@@ -79,6 +80,14 @@ export class DriftDogRuntime {
       return;
     }
     this.apply(passBall(this.sim, playerId, targetId));
+  }
+
+  handleBlink(playerId: string): void {
+    const player = this.sim.players[playerId];
+    if (!player?.alive) {
+      return;
+    }
+    this.apply(blink(this.sim, playerId));
   }
 
   tick(): SimEvent[] {

@@ -27,6 +27,7 @@ interface RemotePlayer {
   hearts: number;
   alive: boolean;
   score: number;
+  blinkCd: number;
 }
 
 interface RemoteBall {
@@ -53,7 +54,13 @@ export class DriftDogScene extends Phaser.Scene {
   private currentBall: RemoteBall = { x: ARENA.width / 2, y: PLAYABLE_HEIGHT / 2, ownerId: "" };
   private previousDog = { x: ARENA.width / 2, y: PLAYABLE_HEIGHT / 2, heading: 0, vx: 0, vy: 0 };
   private currentDog = { x: ARENA.width / 2, y: PLAYABLE_HEIGHT / 2, heading: 0, vx: 0, vy: 0 };
-  private keys!: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
+  private keys!: {
+    W: Phaser.Input.Keyboard.Key;
+    A: Phaser.Input.Keyboard.Key;
+    S: Phaser.Input.Keyboard.Key;
+    D: Phaser.Input.Keyboard.Key;
+    SPACE: Phaser.Input.Keyboard.Key;
+  };
   private scoreText?: Phaser.GameObjects.Text;
   private bannerText?: Phaser.GameObjects.Text;
   private shoutText?: Phaser.GameObjects.Text;
@@ -106,11 +113,12 @@ export class DriftDogScene extends Phaser.Scene {
       this.add.circle(0, 0, PARAMS.player.radius + 10, 0xfff3b0, 0).setStrokeStyle(6, 0xfff3b0, 1).setDepth(6).setVisible(false),
     );
     this.chaseDog = this.buildChaseDog();
-    this.keys = (this.input.keyboard?.addKeys("W,A,S,D") ?? {
+    this.keys = (this.input.keyboard?.addKeys("W,A,S,D,SPACE") ?? {
       W: { isDown: false },
       A: { isDown: false },
       S: { isDown: false },
       D: { isDown: false },
+      SPACE: { isDown: false, justDown: false },
     }) as typeof this.keys;
 
     const hudFont = "PingFang TC, Hiragino Sans GB, Noto Sans TC, sans-serif";
@@ -166,6 +174,12 @@ export class DriftDogScene extends Phaser.Scene {
     if (released?.active && local?.alive && local.hasBall) {
       this.room.send("pass", { heading: released.heading });
     }
+    const spaceBlink = this.keys.SPACE ? Phaser.Input.Keyboard.JustDown(this.keys.SPACE) : false;
+    const blinkPressed = Boolean(this.pads?.consumeBlink() || spaceBlink);
+    if (blinkPressed && local?.alive && String(this.room.state?.phase) === "playing") {
+      this.room.send("blink");
+    }
+    this.pads?.setBlinkCd(local?.blinkCd ?? 0);
     this.drawSticks(move, aim);
     this.drawAimRay(local, aim);
     this.drawRipple();
@@ -359,6 +373,18 @@ export class DriftDogScene extends Phaser.Scene {
       const winner = this.current.get(event.playerId)?.name ?? "玩家";
       this.bannerText?.setText(`${winner} 贏了！`);
     }
+    if (event.type === "blink") {
+      const streak = this.add.circle(event.fromX, event.fromY, 28, 0x90e0ef, 0.75).setDepth(10);
+      this.tweens.add({
+        targets: streak,
+        x: event.toX,
+        y: event.toY,
+        alpha: 0,
+        scale: 0.3,
+        duration: 200,
+        onComplete: () => streak.destroy(),
+      });
+    }
   }
 
   private drawRemoteBodies(exceptId?: string): void {
@@ -415,6 +441,7 @@ export class DriftDogScene extends Phaser.Scene {
       hearts: Number(player.hearts ?? 2),
       alive: player.alive !== false,
       score: 0,
+      blinkCd: Number((player as RemotePlayer).blinkCd ?? 0),
     });
     if (!this.dogs.has(id)) {
       const color = DOG_COLORS[this.dogs.size % DOG_COLORS.length] ?? 0xffffff;

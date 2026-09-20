@@ -33,6 +33,10 @@ export class DriftDogRoom extends Room<DriftDogState> {
       this.runtime.handlePass(client.sessionId, heading);
       this.sync();
     });
+    this.onMessage("blink", (client) => {
+      this.runtime.handleBlink(client.sessionId);
+      this.sync();
+    });
   }
 
   onJoin(client: Client, options: { nickname?: unknown } = {}): void {
@@ -84,6 +88,7 @@ export class DriftDogRoom extends Room<DriftDogState> {
       row.hasBall = player.hasBall;
       row.hearts = player.hearts;
       row.alive = player.alive;
+      row.blinkCd = player.blinkCd;
     }
 
     for (const id of [...this.state.players.keys()]) {

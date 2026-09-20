@@ -60,7 +60,8 @@ export type SimEvent =
   | { type: "pass"; fromId: string; toId: string }
   | { type: "tagged"; victimId: string }
   | { type: "downed"; victimId: string }
-  | { type: "win"; playerId: string };
+  | { type: "win"; playerId: string }
+  | { type: "blink"; playerId: string; fromX: number; fromY: number; toX: number; toY: number };
 
 export interface StepResult {
   state: MatchState;

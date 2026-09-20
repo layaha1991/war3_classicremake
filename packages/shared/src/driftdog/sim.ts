@@ -4,6 +4,8 @@ import {
   BALL_CATCH_RANGE,
   BALL_FLY_SPEED,
   BALL_RADIUS,
+  BLINK_COOLDOWN,
+  BLINK_DISTANCE,
   DOG_ACCEL,
   DOG_CATCH_RANGE,
   DOG_DRIFT,
@@ -458,6 +460,27 @@ export function throwBall(state: MatchState, playerId: string): StepResult {
   return passBall(state, playerId, target);
 }
 
-export function blink(state: MatchState, _playerId?: string): StepResult {
-  return { state: cloneState(state), events: [] };
+export function blink(state: MatchState, playerId?: string): StepResult {
+  const next = cloneState(state);
+  const player = playerId ? next.players[playerId] : undefined;
+  if (next.phase !== "playing" || !player?.alive || player.blinkCd > 0) {
+    return { state: next, events: [] };
+  }
+  const fromX = player.x;
+  const fromY = player.y;
+  const dest = clampEntity(
+    player.x + Math.cos(player.heading) * BLINK_DISTANCE,
+    player.y + Math.sin(player.heading) * BLINK_DISTANCE,
+    player.radius,
+  );
+  player.x = dest.x;
+  player.y = dest.y;
+  player.blinkCd = BLINK_COOLDOWN;
+  if (next.ball.ownerId === player.id && !next.ball.flightToId) {
+    stickBall(next);
+  }
+  return {
+    state: next,
+    events: [{ type: "blink", playerId: player.id, fromX, fromY, toX: dest.x, toY: dest.y }],
+  };
 }

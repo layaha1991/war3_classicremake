@@ -203,6 +203,30 @@ button.ghost {
   touch-action: none;
 }
 
+.pad-blink {
+  position: absolute;
+  left: 50%;
+  bottom: 56px;
+  z-index: 6;
+  width: 120px;
+  height: 120px;
+  margin: 0;
+  padding: 0;
+  border: 3px solid #fff3b0;
+  border-radius: 50%;
+  background: #1b4332;
+  color: #fff3b0;
+  font: 600 40px/1 "PingFang TC", "Hiragino Sans GB", "Noto Sans TC", sans-serif;
+  transform: translateX(-50%);
+  touch-action: manipulation;
+}
+
+.pad-blink.is-cooling {
+  border-color: #6c757d;
+  background: #212529;
+  color: #adb5bd;
+}
+
 .rotate-hint {
   display: none;
 }

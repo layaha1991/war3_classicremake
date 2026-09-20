@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   aimRay,
+  blinkButtonLabel,
   facingForInput,
   readMoveInput,
   readVirtualStick,
@@ -44,6 +45,12 @@ describe("virtual sticks", () => {
   it("builds an aim ray from the holder along the stick heading", () => {
     const ray = aimRay({ x: 10, y: 20 }, 0, 100);
     expect(ray).toEqual({ x1: 10, y1: 20, x2: 110, y2: 20 });
+  });
+
+  it("labels the blink button with remaining cooldown", () => {
+    expect(blinkButtonLabel(0)).toBe("閃");
+    expect(blinkButtonLabel(7)).toBe("7");
+    expect(blinkButtonLabel(0.2)).toBe("1");
   });
 
   it("passes only when the finger is up and the ray hits someone", () => {

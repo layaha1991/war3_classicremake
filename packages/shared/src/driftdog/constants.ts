@@ -16,6 +16,9 @@ export const PARAMS = {
     displayWidth: 96,
     /** Twice the original 96px height. */
     displayHeight: 192,
+    /** Five body lengths (uses the taller visual height). */
+    blinkDistance: 960,
+    blinkCooldown: 7,
   },
   ball: {
     radius: 16,
@@ -72,3 +75,5 @@ export const DOG_RADIUS = PARAMS.dog.radius;
 export const RAY_HIT_WIDTH = PARAMS.ray.hitWidth;
 export const RAY_MAX_DIST = PARAMS.ray.maxDist;
 export const STARTING_HEARTS = PARAMS.lives.hearts;
+export const BLINK_DISTANCE = PARAMS.player.blinkDistance;
+export const BLINK_COOLDOWN = PARAMS.player.blinkCooldown;

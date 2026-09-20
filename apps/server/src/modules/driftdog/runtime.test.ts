@@ -59,4 +59,18 @@ describe("DriftDogRuntime", () => {
     expect(runtime.sim.ball.flightToId).toBe("b");
     expect(runtime.sim.ball.ownerId).toBeNull();
   });
+
+  it("blinks a living player along their heading and ignores cooldown repeats", () => {
+    const runtime = new DriftDogRuntime();
+    runtime.join("a", "拓海");
+    runtime.join("b", "武");
+    runtime.sim.players.a.x = 80;
+    runtime.sim.players.a.y = 400;
+    runtime.sim.players.a.heading = 0;
+    runtime.handleBlink("a");
+    expect(runtime.sim.players.a.x).toBeCloseTo(1040);
+    expect(runtime.events.some((event) => event.type === "blink" && event.playerId === "a")).toBe(true);
+    runtime.handleBlink("a");
+    expect(runtime.sim.players.a.x).toBeCloseTo(1040);
+  });
 });

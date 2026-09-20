@@ -11,6 +11,7 @@ export class PlayerSchema extends Schema {
   @type("boolean") hasBall = false;
   @type("number") hearts = 2;
   @type("boolean") alive = true;
+  @type("number") blinkCd = 0;
 }
 
 export class BallSchema extends Schema {

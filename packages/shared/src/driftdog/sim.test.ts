@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addPlayer, createMatch, passBall, playerHitByRay, removePlayer, restartMatch, step } from "./sim.js";
+import { addPlayer, blink, createMatch, passBall, playerHitByRay, removePlayer, restartMatch, step } from "./sim.js";
 import { ARENA, DT, PARAMS, PLAYABLE_HEIGHT } from "./constants.js";
 
 function stick(moveX = 0, moveY = 0) {
@@ -30,6 +30,36 @@ describe("driftdog simulation", () => {
     expect(PARAMS.dog.radius).toBe(168);
     expect(PARAMS.dog.display).toBe(480);
     expect(PARAMS.dog.catchRange).toBe(256);
+    expect(PARAMS.player.blinkDistance).toBe(PARAMS.player.displayHeight * 5);
+    expect(PARAMS.player.blinkCooldown).toBe(7);
+  });
+
+  it("blinks five body lengths along heading and then cools down", () => {
+    let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 80, y: 400, heading: 0 });
+    state.dog.stun = 99;
+    const flashed = blink(state, "a");
+    expect(flashed.events).toEqual([
+      { type: "blink", playerId: "a", fromX: 80, fromY: 400, toX: flashed.state.players.a.x, toY: flashed.state.players.a.y },
+    ]);
+    expect(flashed.state.players.a.x).toBeCloseTo(80 + PARAMS.player.blinkDistance);
+    expect(flashed.state.players.a.y).toBeCloseTo(400);
+    expect(flashed.state.players.a.blinkCd).toBe(PARAMS.player.blinkCooldown);
+    const blocked = blink(flashed.state, "a");
+    expect(blocked.state.players.a.x).toBe(flashed.state.players.a.x);
+    expect(blocked.events).toEqual([]);
+    const cooled = run(flashed.state, Math.round(PARAMS.player.blinkCooldown / DT), { a: stick() });
+    expect(cooled.state.players.a.blinkCd).toBeCloseTo(0);
+  });
+
+  it("does not blink when dead or into the control strip", () => {
+    let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 200, y: 1480, heading: Math.PI / 2 });
+    state.dog.stun = 99;
+    const clamped = blink(state, "a");
+    expect(clamped.state.players.a.y).toBeLessThanOrEqual(PLAYABLE_HEIGHT - PARAMS.player.radius);
+    state.players.a.alive = false;
+    const dead = blink(state, "a");
+    expect(dead.state.players.a.x).toBe(200);
+    expect(dead.events).toEqual([]);
   });
 
   it("keeps players out of the bottom control strip", () => {
