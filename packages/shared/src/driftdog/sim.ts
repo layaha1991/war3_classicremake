@@ -364,6 +364,28 @@ function stickBall(state: MatchState): void {
   state.ball.vy = owner.vy;
 }
 
+export function dogCatchRange(): number {
+  return Math.max(DOG_CATCH_RANGE, PARAMS.dog.display / 2 + PARAMS.player.displayHeight / 2);
+}
+
+function pointToSegment(
+  px: number,
+  py: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+): number {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const length2 = dx * dx + dy * dy;
+  if (length2 <= 0) {
+    return Math.hypot(px - ax, py - ay);
+  }
+  const t = clamp(((px - ax) * dx + (py - ay) * dy) / length2, 0, 1);
+  return Math.hypot(px - (ax + dx * t), py - (ay + dy * t));
+}
+
 function chaseTarget(state: MatchState): { x: number; y: number } | undefined {
   const holder = state.ball.ownerId ? state.players[state.ball.ownerId] : undefined;
   if (holder?.alive) {
@@ -392,11 +414,15 @@ function stepDog(state: MatchState, events: SimEvent[], dt: number): void {
     return;
   }
   dog.speed = Math.min(DOG_MAX_SPEED, dog.speed + DOG_ACCEL * dt);
-  steer(dog, { x: target.x - dog.x, y: target.y - dog.y }, dog.speed, DOG_TURN_RATE, DOG_DRIFT, dt, DOG_RADIUS);
+  const range = dogCatchRange();
+  const from = { x: dog.x, y: dog.y };
+  const dist = Math.hypot(target.x - dog.x, target.y - dog.y);
+  const turnRate = dist < range * 2 ? Math.max(DOG_TURN_RATE, 6) : DOG_TURN_RATE;
+  steer(dog, { x: target.x - dog.x, y: target.y - dog.y }, dog.speed, turnRate, DOG_DRIFT, dt, DOG_RADIUS);
   if (state.ball.flightToId || state.ball.ownerId !== target.id) {
     return;
   }
-  if (Math.hypot(target.x - dog.x, target.y - dog.y) > DOG_CATCH_RANGE) {
+  if (pointToSegment(target.x, target.y, from.x, from.y, dog.x, dog.y) > range) {
     return;
   }
   target.hearts = Math.max(0, target.hearts - 1);

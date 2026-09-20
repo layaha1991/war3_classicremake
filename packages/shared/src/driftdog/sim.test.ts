@@ -134,6 +134,18 @@ describe("driftdog simulation", () => {
     expect(Math.abs(angleDelta(state.dog.heading, desired))).toBeGreaterThan(0.7);
   });
 
+  it("tags when the dog sprite overlaps a still ball holder", () => {
+    let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 540, y: 768 });
+    state = addPlayer(state, "b", { x: 180, y: 200 });
+    const overlap = PARAMS.dog.display / 2 + PARAMS.player.displayHeight / 2 - 20;
+    state.dog.x = 540;
+    state.dog.y = 768 + overlap;
+    state.dog.stun = 0;
+    state.dog.speed = 10;
+    const after = run(state, 2, { a: stick(), b: stick() });
+    expect(after.events.some((event) => event.type === "tagged" && event.victimId === "a")).toBe(true);
+  });
+
   it("only hits living players with the pass ray", () => {
     let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 200, y: 200, heading: 0 });
     state = addPlayer(state, "b", { x: 500, y: 200 });
