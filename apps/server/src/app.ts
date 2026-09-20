@@ -8,6 +8,7 @@ import { createTraceId, runWithTraceId } from "./infra/logging.js";
 import { registerGuestRoutes } from "./modules/auth/guest-routes.js";
 import { TokenService } from "./modules/auth/token-service.js";
 import type { SessionStore, UserStore } from "./modules/auth/types.js";
+import { registerMatchmakeRoutes } from "./game-server.js";
 import { registerRoomRoutes } from "./modules/lobby/room-routes.js";
 import { RoomService } from "./modules/lobby/room-service.js";
 import type { RoomStore } from "./modules/lobby/types.js";
@@ -57,6 +58,7 @@ export async function buildApp(options: {
     tokens,
     rooms: new RoomService(options.stores.rooms),
   });
+  registerMatchmakeRoutes(app);
 
   return app;
 }

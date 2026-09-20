@@ -14,6 +14,10 @@ pnpm dev
 - Web：http://localhost:5173
 - API / Colyseus：http://localhost:2567
 
+開房後把帶 `?room=房間碼` 的網址傳給朋友。兩人進房才開打。
+
+操作：WASD 移動、滑鼠瞄準、J / 右鍵丟球、空白鍵閃爍。
+
 ## Docker
 
 ```bash

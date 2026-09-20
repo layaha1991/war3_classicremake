@@ -51,9 +51,11 @@ export class ShuagouRoom extends Room<ShuagouState> {
     this.state.ball.ownerId = sim.ball.ownerId ?? "";
     this.state.ball.spin = sim.ball.spin;
 
-    const shout = events.find((event: SimEvent) => event.type === "throw");
-    if (shout && shout.type === "throw") {
-      this.state.lastShout = names[shout.playerId] ?? "";
+    for (const event of events) {
+      this.broadcast("fx", event);
+      if (event.type === "throw") {
+        this.state.lastShout = names[event.playerId] ?? "";
+      }
     }
     this.runtime.events = [];
 

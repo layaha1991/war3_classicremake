@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { Room } from "@colyseus/sdk";
-import { ARENA, DT } from "@war3/shared";
+import { ARENA, DT, type SimEvent } from "@war3/shared";
+import { formatScores, formatShout, formatTimer, waitingCopy } from "./hud.js";
 import { interpolateEntity } from "./interpolate.js";
 import { readKeyboardInput } from "./input.js";
 import { predictLocal } from "./predict.js";
@@ -34,22 +35,66 @@ export class ShuagouScene extends Phaser.Scene {
   private previousBall: RemoteBall = { x: ARENA.width / 2, y: ARENA.height / 2, ownerId: "" };
   private currentBall: RemoteBall = { x: ARENA.width / 2, y: ARENA.height / 2, ownerId: "" };
   private keys!: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
+  private timerText?: Phaser.GameObjects.Text;
+  private scoreText?: Phaser.GameObjects.Text;
+  private bannerText?: Phaser.GameObjects.Text;
+  private shoutText?: Phaser.GameObjects.Text;
+  private hitFlash?: Phaser.GameObjects.Rectangle;
 
   constructor() {
     super("shuagou");
   }
 
-  init(data: { room: Room }): void {
-    this.room = data.room;
-    this.localId = data.room.sessionId;
+  init(): void {
+    const room = (window as unknown as { __shuagouRoom?: Room }).__shuagouRoom;
+    if (!room) {
+      throw new Error("missing joined room");
+    }
+    this.room = room;
+    this.localId = room.sessionId;
   }
 
   create(): void {
+    (window as unknown as { __shuagouCreated?: boolean }).__shuagouCreated = true;
     this.cameras.main.setBackgroundColor("#1b4332");
     this.add.rectangle(ARENA.width / 2, ARENA.height / 2, ARENA.width - 40, ARENA.height - 40, 0x2d6a4f);
     this.add.circle(ARENA.width / 2, ARENA.height / 2, 70, 0x40916c, 0.35);
     this.ball = this.add.circle(ARENA.width / 2, ARENA.height / 2, 10, 0xfff3b0).setStrokeStyle(2, 0x000000);
-    this.keys = this.input.keyboard!.addKeys("W,A,S,D") as typeof this.keys;
+    this.keys = (this.input.keyboard?.addKeys("W,A,S,D") ?? {
+      W: { isDown: false },
+      A: { isDown: false },
+      S: { isDown: false },
+      D: { isDown: false },
+    }) as typeof this.keys;
+
+    const hudFont = "PingFang TC, Hiragino Sans GB, Noto Sans TC, sans-serif";
+    const roomCode = new URLSearchParams(window.location.search).get("room") ?? "";
+    this.add.text(28, 24, roomCode ? `房間 ${roomCode}` : "", {
+      fontFamily: hudFont,
+      fontSize: "16px",
+      color: "#95d5b2",
+    });
+    this.timerText = this.add.text(ARENA.width / 2, 28, "3:00", {
+      fontFamily: hudFont,
+      fontSize: "28px",
+      color: "#f8f9fa",
+    }).setOrigin(0.5, 0);
+    this.scoreText = this.add.text(ARENA.width / 2, 64, "", {
+      fontFamily: hudFont,
+      fontSize: "18px",
+      color: "#f4d35e",
+    }).setOrigin(0.5, 0);
+    this.bannerText = this.add.text(ARENA.width / 2, ARENA.height / 2 - 120, "", {
+      fontFamily: hudFont,
+      fontSize: "26px",
+      color: "#fff3b0",
+    }).setOrigin(0.5);
+    this.shoutText = this.add.text(ARENA.width / 2, 120, "", {
+      fontFamily: hudFont,
+      fontSize: "42px",
+      color: "#f95738",
+    }).setOrigin(0.5).setAlpha(0);
+    this.hitFlash = this.add.rectangle(ARENA.width / 2, ARENA.height / 2, ARENA.width, ARENA.height, 0xffffff, 0);
 
     this.input.mouse?.disableContextMenu();
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
@@ -60,29 +105,23 @@ export class ShuagouScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-SPACE", () => this.room.send("blink"));
     this.input.keyboard?.on("keydown-J", () => this.room.send("throw"));
 
-    this.room.onStateChange((state) => {
-      const seen = new Set<string>();
-      state.players.forEach((player: RemotePlayer, id: string) => {
-        seen.add(id);
-        this.upsertDog(id, player);
-      });
-      for (const id of [...this.dogs.keys()]) {
-        if (!seen.has(id)) {
-          this.dogs.get(id)?.destroy();
-          this.names.get(id)?.destroy();
-          this.dogs.delete(id);
-          this.names.delete(id);
-          this.previous.delete(id);
-          this.current.delete(id);
-        }
+    this.time.delayedCall(0, () => {
+      try {
+        this.room.onStateChange(() => this.pullState());
+        this.room.onMessage("fx", (event: SimEvent) => this.playEffect(event));
+        this.pullState();
+      } catch (error) {
+        console.error("shuagou subscribe failed", error);
       }
     });
   }
 
   update(_time: number, delta: number): void {
+    this.refreshHud();
     const pointer = this.input.activePointer;
     const local = this.current.get(this.localId);
-    if (!local) {
+    if (!local || this.room.state.phase !== "playing") {
+      this.drawRemoteBodies();
       return;
     }
     const input = readKeyboardInput(
@@ -99,21 +138,69 @@ export class ShuagouScene extends Phaser.Scene {
 
     const predicted = predictLocal(local, input, Math.min(delta / 1000, DT * 2));
     this.drawPlayer(this.localId, { ...local, ...predicted }, true);
+    this.drawRemoteBodies(this.localId);
+  }
 
+  private pullState(): void {
+    const seen = new Set<string>();
+    const players = this.room.state.players as { forEach?: (cb: (player: RemotePlayer, id: string) => void) => void };
+    players.forEach?.((player, id) => {
+      seen.add(id);
+      this.upsertDog(id, player);
+    });
+    for (const id of [...this.dogs.keys()]) {
+      if (!seen.has(id)) {
+        this.dogs.get(id)?.destroy();
+        this.names.get(id)?.destroy();
+        this.dogs.delete(id);
+        this.names.delete(id);
+        this.previous.delete(id);
+        this.current.delete(id);
+      }
+    }
+  }
+
+  private refreshHud(): void {
+    const players = [...this.current.values()];
+    this.timerText?.setText(formatTimer(Number(this.room.state.timer ?? 0)));
+    this.scoreText?.setText(formatScores(players));
+    this.bannerText?.setText(waitingCopy(String(this.room.state.phase ?? "lobby")));
+  }
+
+  private playEffect(event: SimEvent): void {
+    if (event.type === "throw") {
+      const name = this.current.get(event.playerId)?.name ?? this.room.state.lastShout ?? "";
+      this.shoutText?.setText(formatShout(String(name))).setAlpha(1);
+      this.tweens.add({ targets: this.shoutText, alpha: 0, duration: 900, delay: 350 });
+    }
+    if (event.type === "hit") {
+      this.hitFlash?.setAlpha(0.45);
+      this.tweens.add({ targets: this.hitFlash, alpha: 0, duration: 180 });
+      const victim = this.dogs.get(event.victimId);
+      if (victim) {
+        this.tweens.add({ targets: victim, scale: 1.4, yoyo: true, duration: 120 });
+      }
+    }
+    if (event.type === "win") {
+      const winner = this.current.get(event.playerId)?.name ?? "玩家";
+      this.bannerText?.setText(`${winner} 贏了！`);
+    }
+  }
+
+  private drawRemoteBodies(exceptId?: string): void {
     for (const [id, player] of this.current) {
-      if (id === this.localId) {
+      if (id === exceptId) {
         continue;
       }
       const from = this.previous.get(id) ?? player;
-      this.drawPlayer(id, { ...player, ...interpolateEntity(from, player, 0.35) }, false);
+      this.drawPlayer(id, { ...player, ...interpolateEntity(from, player, 0.35) }, id === this.localId);
     }
-
-    const ballFrom = this.previousBall;
     const ballTo = {
-      x: this.room.state.ball.x as number,
-      y: this.room.state.ball.y as number,
-      ownerId: this.room.state.ball.ownerId as string,
+      x: Number(this.room.state.ball.x),
+      y: Number(this.room.state.ball.y),
+      ownerId: String(this.room.state.ball.ownerId ?? ""),
     };
+    const ballFrom = this.previousBall;
     this.previousBall = this.currentBall;
     this.currentBall = ballTo;
     const ballPose = interpolateEntity(
@@ -141,7 +228,7 @@ export class ShuagouScene extends Phaser.Scene {
       this.names.set(
         id,
         this.add.text(player.x, player.y - 28, player.name, {
-          fontFamily: "ui-sans-serif, system-ui",
+          fontFamily: "PingFang TC, Hiragino Sans GB, Noto Sans TC, sans-serif",
           fontSize: "14px",
           color: "#f8f9fa",
         }).setOrigin(0.5, 1),
