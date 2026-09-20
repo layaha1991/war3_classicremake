@@ -15,7 +15,6 @@ import {
   DT,
   PLAYER_RADIUS,
   PLAYER_SPEED,
-  PLAYER_TURN_RATE,
   PARAMS,
   RAY_HIT_WIDTH,
   RAY_MAX_DIST,
@@ -270,15 +269,16 @@ function movePlayer(player: PlayerState, input: PlayerInput, dt: number): void {
     return;
   }
   const axis = readAxis(input);
-  if (axis.x === 0 && axis.y === 0) {
-    player.vx *= 0.82;
-    player.vy *= 0.82;
-    const next = clampEntity(player.x + player.vx * dt, player.y + player.vy * dt, player.radius);
-    player.x = next.x;
-    player.y = next.y;
-    return;
+  player.vx = axis.x * PLAYER_SPEED;
+  player.vy = axis.y * PLAYER_SPEED;
+  const next = clampEntity(player.x + player.vx * dt, player.y + player.vy * dt, player.radius);
+  player.x = next.x;
+  player.y = next.y;
+  if (typeof input.facing === "number") {
+    player.heading = input.facing;
+  } else if (axis.x !== 0 || axis.y !== 0) {
+    player.heading = Math.atan2(axis.y, axis.x);
   }
-  steer(player, axis, PLAYER_SPEED, PLAYER_TURN_RATE, 8, dt, player.radius);
 }
 
 function flyBall(state: MatchState): void {

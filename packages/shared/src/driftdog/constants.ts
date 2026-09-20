@@ -8,9 +8,9 @@ export const PARAMS = {
     height: 800,
   },
   player: {
+    /** Instant analog speed at stick rim. Players have no drift. */
     speed: 220,
     radius: 18,
-    turnRate: 7,
   },
   ball: {
     radius: 10,
@@ -49,7 +49,6 @@ export const DT = 1 / TICK_RATE;
 export const ARENA = PARAMS.arena;
 export const PLAYER_SPEED = PARAMS.player.speed;
 export const PLAYER_RADIUS = PARAMS.player.radius;
-export const PLAYER_TURN_RATE = PARAMS.player.turnRate;
 export const BALL_RADIUS = PARAMS.ball.radius;
 export const BALL_CARRY_OFFSET = PARAMS.ball.carryOffset;
 export const BALL_FLY_SPEED = PARAMS.ball.flySpeed;

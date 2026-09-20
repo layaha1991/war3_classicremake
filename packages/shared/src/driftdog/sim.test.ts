@@ -47,6 +47,21 @@ describe("driftdog simulation", () => {
     expect(landed.state.ball.flightToId).toBeNull();
   });
 
+  it("steers the player with the stick immediately, without drift or coast", () => {
+    let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 200, y: 200 });
+    state.dog.stun = 99;
+    const right = run(state, 1, { a: stick(1, 0) });
+    expect(right.state.players.a.vx).toBeCloseTo(PARAMS.player.speed);
+    expect(right.state.players.a.vy).toBeCloseTo(0);
+    expect(right.state.players.a.x).toBeGreaterThan(200);
+    const reverse = run(right.state, 1, { a: stick(-1, 0) });
+    expect(reverse.state.players.a.vx).toBeCloseTo(-PARAMS.player.speed);
+    expect(reverse.state.players.a.vy).toBeCloseTo(0);
+    const stop = run(reverse.state, 1, { a: stick(0, 0) });
+    expect(stop.state.players.a.vx).toBeCloseTo(0);
+    expect(stop.state.players.a.vy).toBeCloseTo(0);
+  });
+
   it("starts the dog in the center and accelerates with slip", () => {
     let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 600, y: 80 });
     state = addPlayer(state, "b", { x: 80, y: 720 });
