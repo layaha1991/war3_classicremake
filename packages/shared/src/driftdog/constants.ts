@@ -32,14 +32,14 @@ export const PARAMS = {
     startX: 540,
     startY: 768,
     /** Speed after spawn / after a tag reset. */
-    initialSpeed: 70,
+    initialSpeed: 30,
     /** Speed added per second while chasing, up to maxSpeed. */
     accel: 180,
-    maxSpeed: 280,
+    maxSpeed: 420,
     /** Lower = wider drifting turns. */
     turnRate: 0.72,
     /** Lower = more slip. Velocity lags behind heading. */
-    drift: 0.42,
+    drift: 0.84,
     display: 400,
     catchRange: 214,
     stun: 1.4,
