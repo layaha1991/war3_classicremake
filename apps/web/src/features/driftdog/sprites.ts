@@ -49,6 +49,10 @@ export function facingFromMotion(heading: number, vx: number, vy: number): Facin
   return facingFromHeading(heading);
 }
 
+export function dogFacingFromHeading(heading: number): "left" | "right" {
+  return Math.cos(heading) < 0 ? "left" : "right";
+}
+
 export function facingRow(facing: Facing, _sheet: "player" | "dog" = "player"): number {
   if (facing === "down") {
     return 0;
@@ -81,7 +85,9 @@ export function spriteFrameIndex(
   vx = 0,
   vy = 0,
 ): number {
-  return facingRow(facingFromMotion(heading, vx, vy), sheet) * SPRITES.columns + walkFrame(elapsedMs, moving);
+  const angle = isMoving(vx, vy) ? Math.atan2(vy, vx) : heading;
+  const facing = sheet === "dog" ? dogFacingFromHeading(angle) : facingFromMotion(heading, vx, vy);
+  return facingRow(facing, sheet) * SPRITES.columns + walkFrame(elapsedMs, moving);
 }
 
 export function ripplePulse(elapsedMs: number): { scale: number; alpha: number } {

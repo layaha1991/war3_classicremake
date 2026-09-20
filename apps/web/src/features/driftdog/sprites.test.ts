@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { SPRITES, facingFromCompassDeg, facingFromHeading, facingFromMotion, facingRow, ripplePulse, shouldFlipX, walkFrame } from "./sprites.js";
+import { SPRITES, dogFacingFromHeading, facingFromCompassDeg, facingFromHeading, facingFromMotion, facingRow, ripplePulse, shouldFlipX, walkFrame } from "./sprites.js";
 
 describe("2d sprite helpers", () => {
   it("maps 360° compass with 0 at the top into four walk directions", () => {
@@ -27,6 +27,11 @@ describe("2d sprite helpers", () => {
     expect(facingRow("right", "dog")).toBe(2);
     expect(shouldFlipX("right", "player")).toBe(false);
     expect(shouldFlipX("right", "dog")).toBe(false);
+    expect(dogFacingFromHeading(0)).toBe("right");
+    expect(dogFacingFromHeading(-Math.PI / 2)).toBe("right");
+    expect(dogFacingFromHeading(Math.PI / 2)).toBe("right");
+    expect(dogFacingFromHeading(Math.PI)).toBe("left");
+    expect(dogFacingFromHeading(-2.4)).toBe("left");
   });
 
   it("advances walk frames only while moving", () => {
