@@ -137,6 +137,37 @@ button.ghost {
   touch-action: none;
 }
 
+.end-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(8, 28, 21, 0.62);
+}
+
+.end-card {
+  width: min(360px, 100%);
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid #40916c;
+  border-radius: 16px;
+  background: rgba(8, 28, 21, 0.92);
+  text-align: center;
+}
+
+.end-title {
+  margin: 0;
+  font-size: 28px;
+  color: #fff3b0;
+}
+
+.end-actions {
+  grid-template-columns: 1fr 1fr;
+}
+
 .pads {
   position: absolute;
   inset: 0;

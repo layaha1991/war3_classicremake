@@ -22,6 +22,7 @@ export {
   passBall,
   playerHitByRay,
   removePlayer,
+  restartMatch,
   step,
   throwBall,
 } from "./driftdog/sim.js";

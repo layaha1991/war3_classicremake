@@ -157,6 +157,40 @@ export function addPlayer(state: MatchState, id: string, options: AddPlayerOptio
   return next;
 }
 
+export function restartMatch(state: MatchState, spawns: { x: number; y: number }[] = []): MatchState {
+  const next = cloneState(state);
+  const ids = Object.keys(next.players);
+  ids.forEach((id, index) => {
+    const player = next.players[id];
+    const spawn = spawns[index];
+    player.hearts = STARTING_HEARTS;
+    player.alive = true;
+    player.vx = 0;
+    player.vy = 0;
+    player.hasBall = false;
+    player.blinkCd = 0;
+    player.score = 0;
+    if (spawn) {
+      const pos = clampEntity(spawn.x, spawn.y, player.radius);
+      player.x = pos.x;
+      player.y = pos.y;
+    }
+  });
+  resetDog(next.dog);
+  next.timer = 0;
+  next.ball.flightToId = null;
+  next.ball.vx = 0;
+  next.ball.vy = 0;
+  next.ball.throwImmune = 0;
+  next.phase = ids.length >= 2 ? "playing" : "lobby";
+  if (ids[0]) {
+    giveBall(next, ids[0]);
+  } else {
+    next.ball.ownerId = null;
+  }
+  return next;
+}
+
 export function removePlayer(state: MatchState, id: string): MatchState {
   const next = cloneState(state);
   const held = next.ball.ownerId === id || next.ball.flightToId === id;

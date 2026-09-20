@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addPlayer, createMatch, passBall, playerHitByRay, removePlayer, step } from "./sim.js";
+import { addPlayer, createMatch, passBall, playerHitByRay, removePlayer, restartMatch, step } from "./sim.js";
 import { ARENA, DT, PARAMS } from "./constants.js";
 
 function stick(moveX = 0, moveY = 0) {
@@ -119,6 +119,40 @@ describe("driftdog simulation", () => {
     expect(after.state.players.a.alive).toBe(false);
     expect(after.state.phase).toBe("ended");
     expect(after.events.some((event) => event.type === "win" && event.playerId === "b")).toBe(true);
+  });
+
+  it("revives the same players and starts another round from the center", () => {
+    let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 200, y: 200 });
+    state = addPlayer(state, "b", { x: 230, y: 200 });
+    state.phase = "ended";
+    state.players.a.hearts = 0;
+    state.players.a.alive = false;
+    state.dog.x = 200;
+    state.dog.y = 200;
+    const next = restartMatch(state, [
+      { x: 280, y: 400 },
+      { x: 920, y: 400 },
+    ]);
+    expect(next.phase).toBe("playing");
+    expect(next.players.a.alive).toBe(true);
+    expect(next.players.a.hearts).toBe(PARAMS.lives.hearts);
+    expect(next.players.b.hearts).toBe(PARAMS.lives.hearts);
+    expect(next.players.a.x).toBe(280);
+    expect(next.players.b.x).toBe(920);
+    expect(next.dog.x).toBeCloseTo(ARENA.width / 2);
+    expect(next.dog.y).toBeCloseTo(ARENA.height / 2);
+    expect(["a", "b"]).toContain(next.ball.ownerId);
+  });
+
+  it("waits in the lobby if a rematch has fewer than two players", () => {
+    let state = addPlayer(createMatch({ phase: "ended" }), "a", { x: 200, y: 200 });
+    state.phase = "ended";
+    state.players.a.hearts = 0;
+    state.players.a.alive = false;
+    const next = restartMatch(state);
+    expect(next.phase).toBe("lobby");
+    expect(next.players.a.alive).toBe(true);
+    expect(next.players.a.hearts).toBe(PARAMS.lives.hearts);
   });
 
   it("keeps the ball with a remaining living player when someone leaves", () => {

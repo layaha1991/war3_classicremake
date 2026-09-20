@@ -6,6 +6,7 @@ import {
   passBall,
   playerHitByRay,
   removePlayer,
+  restartMatch,
   step,
   type MatchState,
   type PlayerInput,
@@ -55,6 +56,16 @@ export class DriftDogRuntime {
       return;
     }
     this.inputs[playerId] = sanitizeInput(raw);
+  }
+
+  handleRematch(playerId: string): void {
+    if (this.sim.phase !== "ended" || !this.sim.players[playerId]) {
+      return;
+    }
+    this.sim = restartMatch(this.sim, SPAWNS);
+    for (const id of Object.keys(this.inputs)) {
+      this.inputs[id] = { up: false, down: false, left: false, right: false };
+    }
   }
 
   handlePass(playerId: string, heading: number): void {

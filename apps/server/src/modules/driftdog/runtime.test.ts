@@ -27,6 +27,29 @@ describe("DriftDogRuntime", () => {
     expect(runtime.sim.players.a.y).not.toBe(12);
   });
 
+  it("lets anyone rematch the same room after the match ends", () => {
+    const runtime = new DriftDogRuntime();
+    runtime.join("a", "拓海");
+    runtime.join("b", "武");
+    runtime.sim.phase = "ended";
+    runtime.sim.players.a.alive = false;
+    runtime.sim.players.a.hearts = 0;
+    runtime.handleRematch("a");
+    expect(runtime.sim.phase).toBe("playing");
+    expect(runtime.sim.players.a.alive).toBe(true);
+    expect(runtime.sim.players.a.hearts).toBe(2);
+  });
+
+  it("ignores rematch before the match ends", () => {
+    const runtime = new DriftDogRuntime();
+    runtime.join("a", "拓海");
+    runtime.join("b", "武");
+    runtime.sim.players.a.x = 111;
+    runtime.handleRematch("a");
+    expect(runtime.sim.phase).toBe("playing");
+    expect(runtime.sim.players.a.x).toBe(111);
+  });
+
   it("passes the ball when the aim heading hits another player", () => {
     const runtime = new DriftDogRuntime();
     runtime.join("a", "拓海");

@@ -21,6 +21,10 @@ export class DriftDogRoom extends Room<DriftDogState> {
     this.onMessage("input", (client, message) => {
       this.runtime.handleInput(client.sessionId, message);
     });
+    this.onMessage("rematch", (client) => {
+      this.runtime.handleRematch(client.sessionId);
+      this.sync();
+    });
     this.onMessage("pass", (client, message) => {
       const heading = sanitizeHeading((message as { heading?: unknown })?.heading);
       if (heading === undefined) {

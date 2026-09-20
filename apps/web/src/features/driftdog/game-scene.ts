@@ -302,7 +302,10 @@ export class DriftDogScene extends Phaser.Scene {
   private refreshHud(): void {
     const players = [...this.current.values()];
     this.scoreText?.setText(formatRoster(players));
-    this.bannerText?.setText(waitingCopy(String(this.room.state.phase ?? "lobby")));
+    const phase = String(this.room.state.phase ?? "lobby");
+    if (phase !== "ended") {
+      this.bannerText?.setText(waitingCopy(phase));
+    }
   }
 
   private playEffect(event: SimEvent): void {

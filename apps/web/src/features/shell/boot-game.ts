@@ -4,11 +4,34 @@ import type { Room } from "@colyseus/sdk";
 import { DriftDogScene } from "../driftdog/game-scene.js";
 import { attachTouchPads } from "../driftdog/input.js";
 import { setJoinedRoom } from "../driftdog/session.js";
+import { wireEndOverlay } from "../driftdog/end-screen.js";
 
-export function bootGame(parent: HTMLElement, room: Room): Phaser.Game {
+type WindowRefs = {
+  __driftdogRoom?: Room;
+  __driftdogPads?: ReturnType<typeof attachTouchPads>;
+  __driftdogGame?: Phaser.Game;
+  __driftdogCreated?: boolean;
+};
+
+function refs(): WindowRefs {
+  return window as unknown as WindowRefs;
+}
+
+export function teardownGame(): void {
+  const win = refs();
+  win.__driftdogPads?.destroy();
+  win.__driftdogGame?.destroy(true);
+  win.__driftdogPads = undefined;
+  win.__driftdogGame = undefined;
+  win.__driftdogRoom = undefined;
+  win.__driftdogCreated = undefined;
+}
+
+export function bootGame(parent: HTMLElement, room: Room, options: { onReturnLobby: () => void }): Phaser.Game {
   setJoinedRoom(room);
-  (window as unknown as { __driftdogRoom: Room }).__driftdogRoom = room;
-  (window as unknown as { __driftdogPads: ReturnType<typeof attachTouchPads> }).__driftdogPads = attachTouchPads(parent);
+  const win = refs();
+  win.__driftdogRoom = room;
+  win.__driftdogPads = attachTouchPads(parent);
   const game = new Phaser.Game({
     type: Phaser.CANVAS,
     parent,
@@ -25,6 +48,14 @@ export function bootGame(parent: HTMLElement, room: Room): Phaser.Game {
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
   });
-  (window as unknown as { __driftdogGame: Phaser.Game }).__driftdogGame = game;
+  win.__driftdogGame = game;
+  wireEndOverlay(parent, room, {
+    onRematch: () => room.send("rematch"),
+    onLobby: () => {
+      void room.leave();
+      teardownGame();
+      options.onReturnLobby();
+    },
+  });
   return game;
 }

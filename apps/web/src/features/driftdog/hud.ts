@@ -11,8 +11,13 @@ export function waitingCopy(phase: string): string {
   if (phase === "lobby") {
     return "等待第二位玩家…把網址傳給朋友";
   }
-  if (phase === "ended") {
-    return "只剩一人";
-  }
   return "";
+}
+
+export function endMatchTitle(winnerName: string): string {
+  return `${winnerName || "玩家"} 贏了！`;
+}
+
+export function winnerNameFromRoster(players: { name: string; alive: boolean }[]): string {
+  return players.find((player) => player.alive)?.name || "玩家";
 }

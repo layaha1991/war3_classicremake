@@ -8,11 +8,35 @@ if (!app) {
   throw new Error("#app missing");
 }
 
-mountLobby(app as HTMLElement, async (roomCode, nickname) => {
+const root = app as HTMLElement;
+let lastNickname = "";
+
+function showLobby(): void {
+  mountLobby(root, enterRoom);
+  if (!lastNickname) {
+    return;
+  }
+  const input = root.querySelector("#nickname");
+  if (input instanceof HTMLInputElement) {
+    input.value = lastNickname;
+  }
+}
+
+async function enterRoom(roomCode: string, nickname: string): Promise<void> {
+  lastNickname = nickname;
   const room = await joinDriftDog(roomCode, nickname);
-  app.innerHTML = "";
+  root.replaceChildren();
   const gameRoot = document.createElement("div");
   gameRoot.id = "game";
-  app.append(gameRoot);
-  bootGame(gameRoot, room);
-});
+  root.append(gameRoot);
+  bootGame(gameRoot, room, {
+    onReturnLobby: () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("room");
+      window.history.replaceState({}, "", url);
+      showLobby();
+    },
+  });
+}
+
+showLobby();
