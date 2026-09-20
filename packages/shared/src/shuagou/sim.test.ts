@@ -1,15 +1,9 @@
 import { describe, expect, it } from "vitest";
-import {
-  addPlayer,
-  blink,
-  createMatch,
-  step,
-  throwBall,
-} from "./sim.js";
+import { addPlayer, createMatch, passBall, playerHitByRay, removePlayer, step } from "./sim.js";
 import { ARENA, DT } from "./constants.js";
 
-function hold(dir: { left?: boolean; right?: boolean; up?: boolean; down?: boolean }) {
-  return { up: false, down: false, left: false, right: false, ...dir };
+function stick(moveX = 0, moveY = 0) {
+  return { up: false, down: false, left: false, right: false, moveX, moveY };
 }
 
 function run(state: ReturnType<typeof createMatch>, frames: number, inputs: Parameters<typeof step>[1]) {
@@ -24,76 +18,61 @@ function run(state: ReturnType<typeof createMatch>, frames: number, inputs: Para
 }
 
 describe("shuagou simulation", () => {
-  it("moves a dog in the input direction and keeps them inside the arena", () => {
-    let state = addPlayer(createMatch(), "a", { x: 200, y: 200 });
-    ({ state } = run(state, 20, { a: hold({ right: true }) }));
-    expect(state.players.a.x).toBeGreaterThan(200);
-    expect(state.players.a.x).toBeLessThan(ARENA.width);
-    expect(state.players.a.y).toBeGreaterThan(0);
-  });
-
-  it("picks up a free ball on contact and carries it", () => {
-    let state = addPlayer(createMatch({ ball: { x: 220, y: 200 } }), "a", { x: 200, y: 200 });
-    ({ state } = run(state, 15, { a: hold({ right: true }) }));
+  it("gives the ball to the first player and never drops it on the ground", () => {
+    let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 200, y: 200 });
     expect(state.players.a.hasBall).toBe(true);
     expect(state.ball.ownerId).toBe("a");
-    expect(Math.hypot(state.ball.x - state.players.a.x, state.ball.y - state.players.a.y)).toBeLessThan(30);
+    state = addPlayer(state, "b", { x: 400, y: 200 });
+    expect(state.ball.ownerId).toBe("a");
+    ({ state } = run(state, 10, { a: stick(), b: stick() }));
+    expect(state.ball.ownerId).toBe("a");
+    expect(state.ball.ownerId).not.toBeNull();
   });
 
-  it("charges spin while the carrier turns, then throws along heading", () => {
-    let state = addPlayer(createMatch({ ball: { x: 200, y: 200 } }), "a", { x: 200, y: 200 });
-    ({ state } = run(state, 3, { a: hold() }));
-    expect(state.players.a.hasBall).toBe(true);
-
-    for (let i = 0; i < 40; i += 1) {
-      const heading = (i / 8) * Math.PI;
-      ({ state } = step(state, { a: { ...hold(), facing: heading } }, DT));
-    }
-    expect(state.ball.spin).toBeGreaterThan(0.5);
-
-    const thrown = throwBall(state, "a");
-    state = thrown.state;
-    expect(thrown.events.some((event) => event.type === "throw")).toBe(true);
-    expect(state.players.a.hasBall).toBe(false);
-    expect(state.ball.ownerId).toBeNull();
-    expect(Math.hypot(state.ball.vx, state.ball.vy)).toBeGreaterThan(200);
+  it("passes the ball only to the teammate the aim ray hits", () => {
+    let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 200, y: 200, heading: 0 });
+    state = addPlayer(state, "b", { x: 500, y: 200 });
+    state = addPlayer(state, "c", { x: 200, y: 500 });
+    expect(playerHitByRay({ x: 200, y: 200 }, 0, Object.values(state.players), "a")).toBe("b");
+    const passed = passBall(state, "a", "b");
+    expect(passed.events.some((event) => event.type === "pass" && event.toId === "b")).toBe(true);
+    expect(passed.state.players.a.hasBall).toBe(false);
+    expect(passed.state.players.b.hasBall).toBe(true);
+    expect(passed.state.ball.ownerId).toBe("b");
   });
 
-  it("scores when a thrown ball hits another dog, not the thrower", () => {
-    let state = addPlayer(createMatch({ ball: { x: 200, y: 200 } }), "a", { x: 200, y: 200, heading: 0 });
-    state = addPlayer(state, "b", { x: 360, y: 200 });
-    ({ state } = run(state, 3, { a: hold(), b: hold() }));
-
-    const thrown = throwBall(state, "a");
-    state = thrown.state;
-    const after = run(state, 30, { a: hold(), b: hold() });
-    expect(after.events.some((event) => event.type === "hit" && event.victimId === "b")).toBe(true);
-    expect(after.state.players.a.score).toBe(1);
-    expect(after.state.players.b.score).toBe(0);
+  it("keeps the ball stuck to a remaining player when the holder leaves", () => {
+    let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 200, y: 200 });
+    state = addPlayer(state, "b", { x: 400, y: 200 });
+    state = removePlayer(state, "a");
+    expect(state.ball.ownerId).toBe("b");
+    expect(state.players.b.hasBall).toBe(true);
   });
 
-  it("blinks forward and then ignores blink until cooldown ends", () => {
-    let state = addPlayer(createMatch(), "a", { x: 200, y: 200, heading: 0 });
-    const first = blink(state, "a");
-    expect(first.state.players.a.x).toBeGreaterThan(200);
-    expect(first.state.players.a.blinkCd).toBeGreaterThan(0);
-
-    const blocked = blink(first.state, "a");
-    expect(blocked.state.players.a.x).toBe(first.state.players.a.x);
-    expect(blocked.events).toEqual([]);
+  it("drifts the dog toward the ball holder instead of snapping", () => {
+    let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 900, y: 200 });
+    state = addPlayer(state, "b", { x: 200, y: 600 });
+    const start = { x: state.dog.x, y: state.dog.y, heading: state.dog.heading };
+    ({ state } = run(state, 25, { a: stick(), b: stick() }));
+    expect(Math.hypot(state.dog.x - 900, state.dog.y - 200)).toBeLessThan(
+      Math.hypot(start.x - 900, start.y - 200),
+    );
+    expect(Math.abs(state.dog.heading - start.heading)).toBeGreaterThan(0.05);
+    expect(state.dog.x).toBeGreaterThan(0);
+    expect(state.dog.x).toBeLessThan(ARENA.width);
   });
 
-  it("ends the match when a player reaches the score limit", () => {
-    let state = addPlayer(createMatch({ scoreToWin: 1, ball: { x: 200, y: 200 } }), "a", {
+  it("tags the holder when the dog catches them and sticks the ball to someone else", () => {
+    let state = addPlayer(createMatch({ phase: "playing", scoreToWin: 3 }), "a", {
       x: 200,
       y: 200,
-      heading: 0,
     });
-    state = addPlayer(state, "b", { x: 360, y: 200 });
-    ({ state } = run(state, 3, { a: hold(), b: hold() }));
-    state = throwBall(state, "a").state;
-    const after = run(state, 30, { a: hold(), b: hold() });
-    expect(after.state.phase).toBe("ended");
-    expect(after.events.some((event) => event.type === "win" && event.playerId === "a")).toBe(true);
+    state = addPlayer(state, "b", { x: 240, y: 200 });
+    state.dog.x = 210;
+    state.dog.y = 200;
+    const after = run(state, 8, { a: stick(), b: stick() });
+    expect(after.events.some((event) => event.type === "tagged" && event.victimId === "a")).toBe(true);
+    expect(after.state.ball.ownerId).toBe("b");
+    expect(after.state.players.b.score).toBeGreaterThan(0);
   });
 });

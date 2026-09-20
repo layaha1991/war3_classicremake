@@ -13,11 +13,22 @@ export {
   DEFAULT_MATCH_TIME,
   DEFAULT_SCORE_TO_WIN,
   DT,
+  RAY_MAX_DIST,
   TICK_RATE,
 } from "./shuagou/constants.js";
-export { addPlayer, blink, createMatch, removePlayer, step, throwBall } from "./shuagou/sim.js";
+export {
+  addPlayer,
+  blink,
+  createMatch,
+  passBall,
+  playerHitByRay,
+  removePlayer,
+  step,
+  throwBall,
+} from "./shuagou/sim.js";
 export type {
   BallState,
+  DogState,
   MatchPhase,
   MatchState,
   PlayerInput,

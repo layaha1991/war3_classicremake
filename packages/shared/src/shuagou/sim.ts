@@ -1,24 +1,28 @@
 import {
   ARENA,
   BALL_CARRY_OFFSET,
-  BALL_FRICTION,
   BALL_RADIUS,
-  BLINK_COOLDOWN,
-  BLINK_DISTANCE,
   DEFAULT_MATCH_TIME,
   DEFAULT_SCORE_TO_WIN,
-  HIT_SPEED_MIN,
-  MAX_SPIN,
-  PICKUP_MAX_SPEED,
-  PICKUP_RANGE,
+  DOG_CATCH_RANGE,
+  DOG_DRIFT,
+  DOG_SPEED,
+  DOG_TURN_RATE,
   PLAYER_RADIUS,
   PLAYER_SPEED,
-  SPIN_PER_RADIAN,
-  THROW_IMMUNE,
-  THROW_SPEED_BASE,
-  THROW_SPEED_PER_SPIN,
+  PLAYER_TURN_RATE,
+  RAY_HIT_WIDTH,
+  RAY_MAX_DIST,
 } from "./constants.js";
-import type { BallState, MatchState, PlayerInput, PlayerState, SimEvent, StepResult } from "./types.js";
+import type {
+  BallState,
+  DogState,
+  MatchState,
+  PlayerInput,
+  PlayerState,
+  SimEvent,
+  StepResult,
+} from "./types.js";
 
 export interface CreateMatchOptions {
   ball?: Partial<Pick<BallState, "x" | "y">>;
@@ -37,7 +41,7 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function angleDelta(from: number, to: number): number {
+export function angleDelta(from: number, to: number): number {
   let delta = to - from;
   while (delta > Math.PI) delta -= Math.PI * 2;
   while (delta < -Math.PI) delta += Math.PI * 2;
@@ -49,6 +53,7 @@ function cloneState(state: MatchState): MatchState {
     ...state,
     players: Object.fromEntries(Object.entries(state.players).map(([id, player]) => [id, { ...player }])),
     ball: { ...state.ball },
+    dog: { ...state.dog },
   };
 }
 
@@ -59,8 +64,21 @@ function clampEntity(x: number, y: number, radius: number): { x: number; y: numb
   };
 }
 
-function ballSpeed(ball: BallState): number {
-  return Math.hypot(ball.vx, ball.vy);
+function giveBall(state: MatchState, playerId: string): void {
+  for (const player of Object.values(state.players)) {
+    player.hasBall = player.id === playerId;
+  }
+  const owner = state.players[playerId];
+  state.ball.ownerId = playerId;
+  state.ball.lastThrowerId = playerId;
+  if (owner) {
+    state.ball.x = owner.x + Math.cos(owner.heading) * BALL_CARRY_OFFSET;
+    state.ball.y = owner.y + Math.sin(owner.heading) * BALL_CARRY_OFFSET;
+  }
+}
+
+function otherPlayerId(state: MatchState, skipId: string): string | undefined {
+  return Object.keys(state.players).find((id) => id !== skipId);
 }
 
 export function createMatch(options: CreateMatchOptions = {}): MatchState {
@@ -77,6 +95,13 @@ export function createMatch(options: CreateMatchOptions = {}): MatchState {
       spin: 0,
       radius: BALL_RADIUS,
       throwImmune: 0,
+    },
+    dog: {
+      x: 80,
+      y: ARENA.height - 80,
+      vx: 0,
+      vy: 0,
+      heading: 0,
     },
     timer: options.timer ?? DEFAULT_MATCH_TIME,
     scoreToWin: options.scoreToWin ?? DEFAULT_SCORE_TO_WIN,
@@ -98,185 +123,173 @@ export function addPlayer(state: MatchState, id: string, options: AddPlayerOptio
     blinkCd: 0,
     radius: PLAYER_RADIUS,
   };
+  if (!next.ball.ownerId) {
+    giveBall(next, id);
+  }
   return next;
 }
 
 export function removePlayer(state: MatchState, id: string): MatchState {
   const next = cloneState(state);
-  const player = next.players[id];
-  if (player?.hasBall) {
-    next.ball.ownerId = null;
-    next.ball.spin = 0;
-  }
+  const held = next.ball.ownerId === id;
   delete next.players[id];
+  if (held) {
+    const nextOwner = Object.keys(next.players)[0];
+    if (nextOwner) {
+      giveBall(next, nextOwner);
+    } else {
+      next.ball.ownerId = null;
+    }
+  }
   return next;
 }
 
+export function playerHitByRay(
+  origin: { x: number; y: number },
+  heading: number,
+  players: PlayerState[],
+  skipId: string,
+  maxDist = RAY_MAX_DIST,
+): string | undefined {
+  const dirX = Math.cos(heading);
+  const dirY = Math.sin(heading);
+  let bestId: string | undefined;
+  let bestT = maxDist;
+  for (const player of players) {
+    if (player.id === skipId) {
+      continue;
+    }
+    const relX = player.x - origin.x;
+    const relY = player.y - origin.y;
+    const along = relX * dirX + relY * dirY;
+    if (along <= 0 || along >= bestT) {
+      continue;
+    }
+    const perp = Math.abs(relX * dirY - relY * dirX);
+    if (perp <= player.radius + RAY_HIT_WIDTH && along < bestT) {
+      bestT = along;
+      bestId = player.id;
+    }
+  }
+  return bestId;
+}
+
+export function passBall(state: MatchState, fromId: string, toId: string): StepResult {
+  const next = cloneState(state);
+  const events: SimEvent[] = [];
+  if (next.phase !== "playing" || next.ball.ownerId !== fromId || !next.players[toId] || fromId === toId) {
+    return { state: next, events };
+  }
+  giveBall(next, toId);
+  events.push({ type: "pass", fromId, toId });
+  return { state: next, events };
+}
+
+function readAxis(input: PlayerInput): { x: number; y: number } {
+  if (typeof input.moveX === "number" || typeof input.moveY === "number") {
+    const x = clamp(input.moveX ?? 0, -1, 1);
+    const y = clamp(input.moveY ?? 0, -1, 1);
+    const length = Math.hypot(x, y);
+    if (length <= 0.08) {
+      return { x: 0, y: 0 };
+    }
+    return { x: x / Math.max(length, 1), y: y / Math.max(length, 1) };
+  }
+  const x = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+  const y = (input.down ? 1 : 0) - (input.up ? 1 : 0);
+  const length = Math.hypot(x, y);
+  return length > 0 ? { x: x / length, y: y / length } : { x: 0, y: 0 };
+}
+
+function steer(entity: { heading: number; vx: number; vy: number; x: number; y: number }, toward: { x: number; y: number }, speed: number, turnRate: number, drift: number, dt: number, radius: number): void {
+  const desired = Math.atan2(toward.y, toward.x);
+  const turn = clamp(angleDelta(entity.heading, desired), -turnRate * dt, turnRate * dt);
+  entity.heading += turn;
+  const targetVx = Math.cos(entity.heading) * speed;
+  const targetVy = Math.sin(entity.heading) * speed;
+  const blend = 1 - Math.exp(-drift * dt);
+  entity.vx += (targetVx - entity.vx) * blend;
+  entity.vy += (targetVy - entity.vy) * blend;
+  const next = clampEntity(entity.x + entity.vx * dt, entity.y + entity.vy * dt, radius);
+  entity.x = next.x;
+  entity.y = next.y;
+}
+
 function movePlayer(player: PlayerState, input: PlayerInput, dt: number): void {
-  const axisX = (input.right ? 1 : 0) - (input.left ? 1 : 0);
-  const axisY = (input.down ? 1 : 0) - (input.up ? 1 : 0);
-  const length = Math.hypot(axisX, axisY);
-  player.vx = length > 0 ? (axisX / length) * PLAYER_SPEED : 0;
-  player.vy = length > 0 ? (axisY / length) * PLAYER_SPEED : 0;
-  const next = clampEntity(player.x + player.vx * dt, player.y + player.vy * dt, player.radius);
-  player.x = next.x;
-  player.y = next.y;
-}
-
-function applyFacing(player: PlayerState, input: PlayerInput, ball: BallState): void {
-  const previous = player.heading;
-  if (typeof input.facing === "number") {
-    player.heading = input.facing;
-  } else if (player.vx !== 0 || player.vy !== 0) {
-    player.heading = Math.atan2(player.vy, player.vx);
-  }
-  if (player.hasBall) {
-    ball.spin = clamp(ball.spin + Math.abs(angleDelta(previous, player.heading)) * SPIN_PER_RADIAN, 0, MAX_SPIN);
-  }
-}
-
-function carryOrIntegrateBall(state: MatchState, dt: number): void {
-  const { ball } = state;
-  if (ball.ownerId) {
-    const owner = state.players[ball.ownerId];
-    if (!owner) {
-      ball.ownerId = null;
-      return;
-    }
-    ball.x = owner.x + Math.cos(owner.heading) * BALL_CARRY_OFFSET;
-    ball.y = owner.y + Math.sin(owner.heading) * BALL_CARRY_OFFSET;
-    ball.vx = owner.vx;
-    ball.vy = owner.vy;
+  const axis = readAxis(input);
+  if (axis.x === 0 && axis.y === 0) {
+    player.vx *= 0.82;
+    player.vy *= 0.82;
+    const next = clampEntity(player.x + player.vx * dt, player.y + player.vy * dt, player.radius);
+    player.x = next.x;
+    player.y = next.y;
     return;
   }
-  ball.x += ball.vx * dt;
-  ball.y += ball.vy * dt;
-  ball.vx *= BALL_FRICTION;
-  ball.vy *= BALL_FRICTION;
-  const clamped = clampEntity(ball.x, ball.y, ball.radius);
-  if (clamped.x !== ball.x) ball.vx *= -0.4;
-  if (clamped.y !== ball.y) ball.vy *= -0.4;
-  ball.x = clamped.x;
-  ball.y = clamped.y;
+  steer(player, axis, PLAYER_SPEED, PLAYER_TURN_RATE, 8, dt, player.radius);
 }
 
-function resolveHits(state: MatchState, events: SimEvent[]): void {
-  const { ball } = state;
-  if (ball.ownerId) {
+function stickBall(state: MatchState): void {
+  const owner = state.ball.ownerId ? state.players[state.ball.ownerId] : undefined;
+  if (!owner) {
+    const fallback = Object.keys(state.players)[0];
+    if (fallback) {
+      giveBall(state, fallback);
+    }
     return;
   }
-  const speed = ballSpeed(ball);
-  if (speed < HIT_SPEED_MIN && ball.throwImmune <= 0) {
+  state.ball.x = owner.x + Math.cos(owner.heading) * BALL_CARRY_OFFSET;
+  state.ball.y = owner.y + Math.sin(owner.heading) * BALL_CARRY_OFFSET;
+  state.ball.vx = owner.vx;
+  state.ball.vy = owner.vy;
+}
+
+function stepDog(state: MatchState, events: SimEvent[], dt: number): void {
+  const holder = state.ball.ownerId ? state.players[state.ball.ownerId] : undefined;
+  if (!holder) {
     return;
   }
-  for (const player of Object.values(state.players)) {
-    if (player.id === ball.lastThrowerId) {
-      continue;
-    }
-    if (Math.hypot(player.x - ball.x, player.y - ball.y) > player.radius + ball.radius) {
-      continue;
-    }
-    const attackerId = ball.lastThrowerId;
-    events.push({ type: "hit", attackerId: attackerId ?? "unknown", victimId: player.id });
-    if (attackerId && state.players[attackerId]) {
-      state.players[attackerId].score += 1;
-      events.push({ type: "score", playerId: attackerId, score: state.players[attackerId].score });
-      if (state.players[attackerId].score >= state.scoreToWin) {
-        state.phase = "ended";
-        events.push({ type: "win", playerId: attackerId });
-      }
-    }
-    ball.vx *= 0.15;
-    ball.vy *= 0.15;
-    ball.lastThrowerId = null;
-    ball.throwImmune = 0.15;
-    break;
-  }
-}
-
-function resolvePickups(state: MatchState, events: SimEvent[]): void {
-  const { ball } = state;
-  if (ball.ownerId || ball.throwImmune > 0 || ballSpeed(ball) > PICKUP_MAX_SPEED) {
-    return;
-  }
-  for (const player of Object.values(state.players)) {
-    if (Math.hypot(player.x - ball.x, player.y - ball.y) > PICKUP_RANGE) {
-      continue;
-    }
-    ball.ownerId = player.id;
-    ball.lastThrowerId = null;
-    ball.spin = 0;
-    ball.vx = 0;
-    ball.vy = 0;
-    player.hasBall = true;
-    events.push({ type: "pickup", playerId: player.id });
-    break;
-  }
-}
-
-export function throwBall(state: MatchState, playerId: string): StepResult {
-  const next = cloneState(state);
-  const events: SimEvent[] = [];
-  const player = next.players[playerId];
-  if (!player?.hasBall || next.ball.ownerId !== playerId || next.phase !== "playing") {
-    return { state: next, events };
-  }
-  const spin = next.ball.spin;
-  const speed = THROW_SPEED_BASE + spin * THROW_SPEED_PER_SPIN;
-  next.ball.ownerId = null;
-  next.ball.lastThrowerId = playerId;
-  next.ball.vx = Math.cos(player.heading) * speed;
-  next.ball.vy = Math.sin(player.heading) * speed;
-  next.ball.spin = 0;
-  next.ball.throwImmune = THROW_IMMUNE;
-  player.hasBall = false;
-  events.push({ type: "throw", playerId, spin });
-  return { state: next, events };
-}
-
-export function blink(state: MatchState, playerId: string): StepResult {
-  const next = cloneState(state);
-  const events: SimEvent[] = [];
-  const player = next.players[playerId];
-  if (!player || player.blinkCd > 0 || next.phase !== "playing") {
-    return { state: next, events };
-  }
-  const dest = clampEntity(
-    player.x + Math.cos(player.heading) * BLINK_DISTANCE,
-    player.y + Math.sin(player.heading) * BLINK_DISTANCE,
-    player.radius,
+  const dog: DogState = state.dog;
+  steer(
+    dog,
+    { x: holder.x - dog.x, y: holder.y - dog.y },
+    DOG_SPEED,
+    DOG_TURN_RATE,
+    DOG_DRIFT,
+    dt,
+    20,
   );
-  player.x = dest.x;
-  player.y = dest.y;
-  player.blinkCd = BLINK_COOLDOWN;
-  if (player.hasBall) {
-    next.ball.x = player.x + Math.cos(player.heading) * BALL_CARRY_OFFSET;
-    next.ball.y = player.y + Math.sin(player.heading) * BALL_CARRY_OFFSET;
+  if (Math.hypot(holder.x - dog.x, holder.y - dog.y) > DOG_CATCH_RANGE) {
+    return;
   }
-  events.push({ type: "blink", playerId });
-  return { state: next, events };
+  const nextOwner = otherPlayerId(state, holder.id);
+  events.push({ type: "tagged", victimId: holder.id });
+  if (nextOwner && state.players[nextOwner]) {
+    state.players[nextOwner].score += 1;
+    events.push({ type: "score", playerId: nextOwner, score: state.players[nextOwner].score });
+    giveBall(state, nextOwner);
+    if (state.players[nextOwner].score >= state.scoreToWin) {
+      state.phase = "ended";
+      events.push({ type: "win", playerId: nextOwner });
+    }
+  }
 }
 
 export function step(state: MatchState, inputs: Record<string, PlayerInput>, dt: number): StepResult {
   const next = cloneState(state);
   const events: SimEvent[] = [];
   if (next.phase !== "playing") {
+    stickBall(next);
     return { state: next, events };
   }
 
   for (const player of Object.values(next.players)) {
     const input = inputs[player.id] ?? { up: false, down: false, left: false, right: false };
     movePlayer(player, input, dt);
-    applyFacing(player, input, next.ball);
     player.blinkCd = Math.max(0, player.blinkCd - dt);
   }
-
-  carryOrIntegrateBall(next, dt);
-  next.ball.throwImmune = Math.max(0, next.ball.throwImmune - dt);
-  resolveHits(next, events);
-  if (next.phase === "playing") {
-    resolvePickups(next, events);
-  }
+  stickBall(next);
+  stepDog(next, events, dt);
+  stickBall(next);
 
   next.timer = Math.max(0, next.timer - dt);
   if (next.timer === 0 && next.phase === "playing") {
@@ -288,4 +301,21 @@ export function step(state: MatchState, inputs: Record<string, PlayerInput>, dt:
   }
 
   return { state: next, events };
+}
+
+export function throwBall(state: MatchState, playerId: string): StepResult {
+  const target = playerHitByRay(
+    state.players[playerId] ?? { x: 0, y: 0 },
+    state.players[playerId]?.heading ?? 0,
+    Object.values(state.players),
+    playerId,
+  );
+  if (!target) {
+    return { state: cloneState(state), events: [] };
+  }
+  return passBall(state, playerId, target);
+}
+
+export function blink(state: MatchState, _playerId?: string): StepResult {
+  return { state: cloneState(state), events: [] };
 }
