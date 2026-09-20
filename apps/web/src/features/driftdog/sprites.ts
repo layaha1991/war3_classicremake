@@ -10,9 +10,9 @@ export const SPRITES = {
   rows: 4,
   framesPerDir: 4,
   fps: 8,
-  playerDisplayWidth: 192,
-  playerDisplayHeight: 192,
-  dogDisplay: 320,
+  playerDisplayWidth: 154,
+  playerDisplayHeight: 154,
+  dogDisplay: 256,
 } as const;
 
 /** Compass degrees: 0 is up / away from camera, clockwise. */
