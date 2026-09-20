@@ -1,0 +1,96 @@
+openapi: 3.1.0
+info:
+  title: War3 Classic Remake API
+  version: 0.1.0
+  description: Lobby and guest-auth contract. Gameplay uses Colyseus rooms.
+servers:
+  - url: http://localhost:2567
+paths:
+  /api/auth/guest:
+    post:
+      summary: Create a guest session
+      operationId: createGuest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nickname]
+              properties:
+                nickname:
+                  type: string
+                  minLength: 1
+                  maxLength: 16
+      responses:
+        "204":
+          description: Guest cookies set (httpOnly access + refresh JWT)
+        "400":
+          description: Invalid nickname
+  /api/rooms:
+    post:
+      summary: Create a room for an implemented map
+      operationId: createRoom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mapId]
+              properties:
+                mapId:
+                  type: string
+                  enum: [shuagou, haoren-td, element-td]
+      responses:
+        "201":
+          description: Room created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomCreated"
+        "401":
+          description: Missing guest session
+        "403":
+          description: Map is not implemented
+  /api/rooms/{code}:
+    get:
+      summary: Look up a room by code
+      operationId: getRoom
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+      responses:
+        "200":
+          description: Room summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomSummary"
+        "404":
+          description: Unknown room code
+components:
+  schemas:
+    RoomCreated:
+      type: object
+      required: [roomCode]
+      properties:
+        roomCode:
+          type: string
+    RoomSummary:
+      type: object
+      required: [mapId, status, playerCount]
+      properties:
+        mapId:
+          type: string
+        status:
+          type: string
+          enum: [lobby, playing, ended]
+        playerCount:
+          type: integer
+          minimum: 0
