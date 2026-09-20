@@ -39,5 +39,8 @@ const app = await buildApp({
   stores: await createStores(),
 });
 
+await app.ready();
+const { attachGameServer } = await import("./game-server.js");
+attachGameServer(app.server);
 await app.listen({ port: config.port, host: "0.0.0.0" });
-logger.info({ event: "server.listen", port: config.port });
+logger.info({ event: "server.listen", port: config.port, realtime: "colyseus" });
