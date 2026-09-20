@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { Room } from "@colyseus/sdk";
 import { ARENA, DT, RAY_MAX_DIST, playerHitByRay, type SimEvent } from "@war3/shared";
-import { formatScores, formatShout, formatTimer, waitingCopy } from "./hud.js";
+import { formatRoster, waitingCopy } from "./hud.js";
 import { interpolateEntity } from "./interpolate.js";
 import {
   STICK_MAX_RADIUS,
@@ -20,6 +20,8 @@ interface RemotePlayer {
   y: number;
   heading: number;
   hasBall: boolean;
+  hearts: number;
+  alive: boolean;
   score: number;
 }
 
@@ -32,7 +34,7 @@ interface RemoteBall {
 const DOG_COLORS = [0xf4d35e, 0xee964b, 0xf95738, 0x0d3b66, 0x28afb0, 0x9b5de5, 0x00bbf9, 0xfee440];
 const PLAYER_HIT_RADIUS = 18;
 
-export class ShuagouScene extends Phaser.Scene {
+export class DriftDogScene extends Phaser.Scene {
   private room!: Room;
   private localId = "";
   private dogs = new Map<string, Phaser.GameObjects.Arc>();
@@ -43,10 +45,9 @@ export class ShuagouScene extends Phaser.Scene {
   private current = new Map<string, RemotePlayer>();
   private previousBall: RemoteBall = { x: ARENA.width / 2, y: ARENA.height / 2, ownerId: "" };
   private currentBall: RemoteBall = { x: ARENA.width / 2, y: ARENA.height / 2, ownerId: "" };
-  private previousDog = { x: 80, y: 720, heading: 0 };
-  private currentDog = { x: 80, y: 720, heading: 0 };
+  private previousDog = { x: 600, y: 400, heading: 0 };
+  private currentDog = { x: 600, y: 400, heading: 0 };
   private keys!: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
-  private timerText?: Phaser.GameObjects.Text;
   private scoreText?: Phaser.GameObjects.Text;
   private bannerText?: Phaser.GameObjects.Text;
   private shoutText?: Phaser.GameObjects.Text;
@@ -59,11 +60,11 @@ export class ShuagouScene extends Phaser.Scene {
   private rayGfx?: Phaser.GameObjects.Graphics;
 
   constructor() {
-    super("shuagou");
+    super("driftdog");
   }
 
   init(): void {
-    const room = (window as unknown as { __shuagouRoom?: Room }).__shuagouRoom;
+    const room = (window as unknown as { __driftdogRoom?: Room }).__driftdogRoom;
     if (!room) {
       throw new Error("missing joined room");
     }
@@ -72,7 +73,7 @@ export class ShuagouScene extends Phaser.Scene {
   }
 
   create(): void {
-    (window as unknown as { __shuagouCreated?: boolean }).__shuagouCreated = true;
+    (window as unknown as { __driftdogCreated?: boolean }).__driftdogCreated = true;
     this.cameras.main.setBackgroundColor("#1b4332");
     this.add.rectangle(ARENA.width / 2, ARENA.height / 2, ARENA.width - 40, ARENA.height - 40, 0x2d6a4f);
     this.add.circle(ARENA.width / 2, ARENA.height / 2, 70, 0x40916c, 0.35);
@@ -92,15 +93,10 @@ export class ShuagouScene extends Phaser.Scene {
       fontSize: "16px",
       color: "#95d5b2",
     });
-    this.timerText = this.add.text(ARENA.width / 2, 28, "3:00", {
+    this.scoreText = this.add.text(ARENA.width / 2, 28, "", {
       fontFamily: hudFont,
-      fontSize: "28px",
-      color: "#f8f9fa",
-    }).setOrigin(0.5, 0);
-    this.scoreText = this.add.text(ARENA.width / 2, 64, "", {
-      fontFamily: hudFont,
-      fontSize: "18px",
-      color: "#f4d35e",
+      fontSize: "22px",
+      color: "#f95738",
     }).setOrigin(0.5, 0);
     this.bannerText = this.add.text(ARENA.width / 2, ARENA.height / 2 - 120, "", {
       fontFamily: hudFont,
@@ -115,7 +111,7 @@ export class ShuagouScene extends Phaser.Scene {
     this.hitFlash = this.add.rectangle(ARENA.width / 2, ARENA.height / 2, ARENA.width, ARENA.height, 0xffffff, 0);
     this.rayGfx = this.add.graphics().setDepth(16);
     this.buildSticks();
-    this.pads = (window as unknown as { __shuagouPads?: TouchPadController }).__shuagouPads;
+    this.pads = (window as unknown as { __driftdogPads?: TouchPadController }).__driftdogPads;
     this.input.mouse?.disableContextMenu();
 
     this.time.delayedCall(0, () => {
@@ -124,7 +120,7 @@ export class ShuagouScene extends Phaser.Scene {
         this.room.onMessage("fx", (event: SimEvent) => this.playEffect(event));
         this.pullState();
       } catch (error) {
-        console.error("shuagou subscribe failed", error);
+        console.error("driftdog subscribe failed", error);
       }
     });
   }
@@ -136,7 +132,7 @@ export class ShuagouScene extends Phaser.Scene {
     const move = this.pads?.move ?? { active: false, x: 0, y: 0, heading: 0, magnitude: 0 };
     const aim = this.pads?.aim ?? { active: false, x: 0, y: 0, heading: 0, magnitude: 0 };
     const released = this.pads?.consumeAimRelease();
-    if (released?.active) {
+    if (released?.active && local?.alive && local.hasBall) {
       this.room.send("pass", { heading: released.heading });
     }
     this.drawSticks(move, aim);
@@ -145,7 +141,7 @@ export class ShuagouScene extends Phaser.Scene {
     if (!this.room.state?.ball) {
       return;
     }
-    if (!local || this.room.state.phase !== "playing") {
+    if (!local?.alive || this.room.state.phase !== "playing") {
       this.drawRemoteBodies();
       return;
     }
@@ -264,7 +260,9 @@ export class ShuagouScene extends Phaser.Scene {
         vy: 0,
         heading: player.heading,
         hasBall: player.hasBall,
-        score: player.score,
+        hearts: player.hearts,
+        alive: player.alive,
+        score: 0,
         blinkCd: 0,
         radius: PLAYER_HIT_RADIUS,
       })),
@@ -303,24 +301,14 @@ export class ShuagouScene extends Phaser.Scene {
 
   private refreshHud(): void {
     const players = [...this.current.values()];
-    this.timerText?.setText(formatTimer(Number(this.room.state.timer ?? 0)));
-    this.scoreText?.setText(formatScores(players));
+    this.scoreText?.setText(formatRoster(players));
     this.bannerText?.setText(waitingCopy(String(this.room.state.phase ?? "lobby")));
   }
 
   private playEffect(event: SimEvent): void {
-    if (event.type === "throw" || event.type === "pass") {
-      const text = event.type === "pass"
-        ? String(this.room.state.lastShout || "傳球")
-        : formatShout(this.current.get(event.playerId)?.name ?? this.room.state.lastShout ?? "");
-      this.shoutText?.setText(text).setAlpha(1);
-      this.tweens.add({ targets: this.shoutText, alpha: 0, duration: 900, delay: 350 });
-    }
-    if (event.type === "tagged" || event.type === "hit") {
+    if (event.type === "tagged" || event.type === "downed") {
       this.hitFlash?.setAlpha(0.45);
       this.tweens.add({ targets: this.hitFlash, alpha: 0, duration: 180 });
-      this.shoutText?.setText(String(this.room.state.lastShout || "甩到了")).setAlpha(1);
-      this.tweens.add({ targets: this.shoutText, alpha: 0, duration: 700, delay: 200 });
     }
     if (event.type === "win") {
       const winner = this.current.get(event.playerId)?.name ?? "玩家";
@@ -376,7 +364,9 @@ export class ShuagouScene extends Phaser.Scene {
       y: player.y,
       heading: player.heading,
       hasBall: player.hasBall,
-      score: player.score,
+      hearts: Number(player.hearts ?? 2),
+      alive: player.alive !== false,
+      score: 0,
     });
     if (!this.dogs.has(id)) {
       const color = DOG_COLORS[this.dogs.size % DOG_COLORS.length] ?? 0xffffff;
@@ -396,10 +386,14 @@ export class ShuagouScene extends Phaser.Scene {
     const dog = this.dogs.get(id);
     const label = this.names.get(id);
     dog?.setPosition(player.x, player.y);
-    dog?.setScale(player.hasBall ? 1.15 : 1);
-    if (local) {
+    dog?.setScale(player.hasBall && player.alive ? 1.15 : 1);
+    dog?.setAlpha(player.alive ? 1 : 0.45);
+    if (local && player.alive) {
       dog?.setStrokeStyle(4, 0xffffff);
+    } else {
+      dog?.setStrokeStyle(3, player.alive ? 0x081c15 : 0x6c757d);
     }
-    label?.setPosition(player.x, player.y - 28).setText(player.hasBall ? `${player.name} · 球` : player.name);
+    const tag = !player.alive ? " · 倒地" : player.hasBall ? " · 球" : "";
+    label?.setPosition(player.x, player.y - 28).setText(`${player.name}${tag}`);
   }
 }

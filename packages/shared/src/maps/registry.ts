@@ -1,4 +1,4 @@
-export type MapId = "shuagou" | "haoren-td" | "element-td";
+export type MapId = "driftdog" | "haoren-td" | "element-td";
 
 export interface MapDefinition {
   id: MapId;
@@ -9,8 +9,8 @@ export interface MapDefinition {
 }
 
 export const MAPS: Record<MapId, MapDefinition> = {
-  shuagou: {
-    id: "shuagou",
+  driftdog: {
+    id: "driftdog",
     name: "秋名山甩狗",
     minPlayers: 2,
     maxPlayers: 8,

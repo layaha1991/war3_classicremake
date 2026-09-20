@@ -1,5 +1,5 @@
 import { mountLobby } from "./features/lobby/lobby-screen.js";
-import { joinShuagou } from "./features/shuagou/net.js";
+import { joinDriftDog } from "./features/driftdog/net.js";
 import { bootGame } from "./features/shell/boot-game.js";
 import "./features/shell/styles.css";
 
@@ -9,7 +9,7 @@ if (!app) {
 }
 
 mountLobby(app as HTMLElement, async (roomCode, nickname) => {
-  const room = await joinShuagou(roomCode, nickname);
+  const room = await joinDriftDog(roomCode, nickname);
   app.innerHTML = "";
   const gameRoot = document.createElement("div");
   gameRoot.id = "game";

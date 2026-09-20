@@ -24,7 +24,7 @@ const SPAWNS = [
   { x: 840, y: 560 },
 ];
 
-export class ShuagouRuntime {
+export class DriftDogRuntime {
   sim: MatchState = createMatch({ phase: "lobby" });
   inputs: Record<string, PlayerInput> = {};
   names: Record<string, string> = {};
@@ -50,7 +50,8 @@ export class ShuagouRuntime {
   }
 
   handleInput(playerId: string, raw: unknown): void {
-    if (!this.sim.players[playerId]) {
+    const player = this.sim.players[playerId];
+    if (!player?.alive) {
       return;
     }
     this.inputs[playerId] = sanitizeInput(raw);
@@ -58,7 +59,7 @@ export class ShuagouRuntime {
 
   handlePass(playerId: string, heading: number): void {
     const player = this.sim.players[playerId];
-    if (!player) {
+    if (!player?.alive) {
       return;
     }
     const targetId = playerHitByRay(player, heading, Object.values(this.sim.players), playerId);

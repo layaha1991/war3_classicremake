@@ -16,6 +16,8 @@ export interface PlayerState {
   vy: number;
   heading: number;
   hasBall: boolean;
+  hearts: number;
+  alive: boolean;
   score: number;
   blinkCd: number;
   radius: number;
@@ -27,6 +29,7 @@ export interface BallState {
   vx: number;
   vy: number;
   ownerId: string | null;
+  flightToId: string | null;
   lastThrowerId: string | null;
   spin: number;
   radius: number;
@@ -39,6 +42,7 @@ export interface DogState {
   vx: number;
   vy: number;
   heading: number;
+  speed: number;
   stun: number;
 }
 
@@ -50,18 +54,13 @@ export interface MatchState {
   ball: BallState;
   dog: DogState;
   timer: number;
-  scoreToWin: number;
 }
 
 export type SimEvent =
   | { type: "pass"; fromId: string; toId: string }
   | { type: "tagged"; victimId: string }
-  | { type: "score"; playerId: string; score: number }
-  | { type: "win"; playerId: string }
-  | { type: "pickup"; playerId: string }
-  | { type: "throw"; playerId: string; spin: number }
-  | { type: "hit"; attackerId: string; victimId: string }
-  | { type: "blink"; playerId: string };
+  | { type: "downed"; victimId: string }
+  | { type: "win"; playerId: string };
 
 export interface StepResult {
   state: MatchState;

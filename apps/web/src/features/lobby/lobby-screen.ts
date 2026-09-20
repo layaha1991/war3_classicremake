@@ -1,5 +1,5 @@
 import { createLobbyApi } from "./api.js";
-import { newRoomCode } from "../shuagou/net.js";
+import { newRoomCode } from "../driftdog/net.js";
 
 export function mountLobby(root: HTMLElement, onJoin: (roomCode: string, nickname: string) => Promise<void>): void {
   const params = new URLSearchParams(window.location.search);
@@ -17,7 +17,7 @@ export function mountLobby(root: HTMLElement, onJoin: (roomCode: string, nicknam
         </div>
         <ul id="rooms" class="rooms"></ul>
         <p id="error" class="error" hidden></p>
-        <p class="hint">左擳桿移動，右擳桿瞄光線，放開就傳球。球永遠貼人，狗會漂移追持球者。</p>
+        <p class="hint">左擳桿移動，右擳桿瞄光線，放開就傳球。每人兩顆心，狗從中間甩呔追持球者。</p>
       </section>
     </main>
   `;

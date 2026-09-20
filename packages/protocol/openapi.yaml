@@ -41,7 +41,7 @@ paths:
               properties:
                 mapId:
                   type: string
-                  enum: [shuagou, haoren-td, element-td]
+                  enum: [driftdog, haoren-td, element-td]
       responses:
         "201":
           description: Room created

@@ -1,14 +1,14 @@
 import Phaser from "phaser";
 import { ARENA } from "@war3/shared";
 import type { Room } from "@colyseus/sdk";
-import { ShuagouScene } from "../shuagou/game-scene.js";
-import { attachTouchPads } from "../shuagou/input.js";
-import { setJoinedRoom } from "../shuagou/session.js";
+import { DriftDogScene } from "../driftdog/game-scene.js";
+import { attachTouchPads } from "../driftdog/input.js";
+import { setJoinedRoom } from "../driftdog/session.js";
 
 export function bootGame(parent: HTMLElement, room: Room): Phaser.Game {
   setJoinedRoom(room);
-  (window as unknown as { __shuagouRoom: Room }).__shuagouRoom = room;
-  (window as unknown as { __shuagouPads: ReturnType<typeof attachTouchPads> }).__shuagouPads = attachTouchPads(parent);
+  (window as unknown as { __driftdogRoom: Room }).__driftdogRoom = room;
+  (window as unknown as { __driftdogPads: ReturnType<typeof attachTouchPads> }).__driftdogPads = attachTouchPads(parent);
   const game = new Phaser.Game({
     type: Phaser.CANVAS,
     parent,
@@ -16,7 +16,7 @@ export function bootGame(parent: HTMLElement, room: Room): Phaser.Game {
     height: ARENA.height,
     backgroundColor: "#081c15",
     banner: false,
-    scene: [ShuagouScene],
+    scene: [DriftDogScene],
     input: {
       activePointers: 3,
     },
@@ -25,6 +25,6 @@ export function bootGame(parent: HTMLElement, room: Room): Phaser.Game {
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
   });
-  (window as unknown as { __shuagouGame: Phaser.Game }).__shuagouGame = game;
+  (window as unknown as { __driftdogGame: Phaser.Game }).__driftdogGame = game;
   return game;
 }

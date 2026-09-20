@@ -1,17 +1,16 @@
 import { Room, type Client } from "colyseus";
-import type { SimEvent } from "@war3/shared";
-import { PlayerSchema, ShuagouState } from "./schema.js";
+import { PlayerSchema, DriftDogState } from "./schema.js";
 import { sanitizeHeading, sanitizeNickname } from "./sanitize-input.js";
-import { ShuagouRuntime } from "./shuagou-runtime.js";
+import { DriftDogRuntime } from "./runtime.js";
 
-export class ShuagouRoom extends Room<ShuagouState> {
+export class DriftDogRoom extends Room<DriftDogState> {
   maxClients = 8;
-  private readonly runtime = new ShuagouRuntime();
+  private readonly runtime = new DriftDogRuntime();
 
   onCreate(options: { roomCode?: unknown } = {}): void {
     const roomCode = typeof options.roomCode === "string" ? options.roomCode.toUpperCase() : this.roomId.slice(0, 6).toUpperCase();
     this.setMetadata({ roomCode });
-    this.setState(new ShuagouState());
+    this.setState(new DriftDogState());
     this.state.roomCode = roomCode;
     this.sync();
     this.setSimulationInterval(() => {
@@ -47,27 +46,21 @@ export class ShuagouRoom extends Room<ShuagouState> {
     const { sim, names, events } = this.runtime;
     this.state.phase = sim.phase;
     this.state.timer = sim.timer;
-    this.state.scoreToWin = sim.scoreToWin;
     this.state.ball.x = sim.ball.x;
     this.state.ball.y = sim.ball.y;
     this.state.ball.vx = sim.ball.vx;
     this.state.ball.vy = sim.ball.vy;
     this.state.ball.ownerId = sim.ball.ownerId ?? "";
-    this.state.ball.spin = sim.ball.spin;
+    this.state.ball.flightToId = sim.ball.flightToId ?? "";
     this.state.dog.x = sim.dog.x;
     this.state.dog.y = sim.dog.y;
     this.state.dog.vx = sim.dog.vx;
     this.state.dog.vy = sim.dog.vy;
     this.state.dog.heading = sim.dog.heading;
+    this.state.dog.speed = sim.dog.speed;
 
     for (const event of events) {
       this.broadcast("fx", event);
-      if (event.type === "pass") {
-        this.state.lastShout = `${names[event.fromId] ?? ""} → ${names[event.toId] ?? ""}`;
-      }
-      if (event.type === "tagged") {
-        this.state.lastShout = `甩到 ${names[event.victimId] ?? ""}`;
-      }
     }
     this.runtime.events = [];
 
@@ -85,8 +78,8 @@ export class ShuagouRoom extends Room<ShuagouState> {
       row.vy = player.vy;
       row.heading = player.heading;
       row.hasBall = player.hasBall;
-      row.score = player.score;
-      row.blinkCd = player.blinkCd;
+      row.hearts = player.hearts;
+      row.alive = player.alive;
     }
 
     for (const id of [...this.state.players.keys()]) {

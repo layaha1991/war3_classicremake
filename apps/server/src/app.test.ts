@@ -72,7 +72,7 @@ describe("guest lobby API", () => {
     const response = await app.inject({
       method: "POST",
       url: "/api/rooms",
-      payload: { mapId: "shuagou" },
+      payload: { mapId: "driftdog" },
     });
     expect(response.statusCode).toBe(401);
   });
@@ -104,7 +104,7 @@ describe("guest lobby API", () => {
       method: "POST",
       url: "/api/rooms",
       headers: { cookie: cookieHeader(app, guest) },
-      payload: { mapId: "shuagou", ownerId: "somebody-else" },
+      payload: { mapId: "driftdog", ownerId: "somebody-else" },
     });
 
     expect(created.statusCode).toBe(201);
@@ -114,7 +114,7 @@ describe("guest lobby API", () => {
     const lookedUp = await app.inject({ method: "GET", url: `/api/rooms/${roomCode}` });
     expect(lookedUp.statusCode).toBe(200);
     expect(lookedUp.json()).toEqual({
-      mapId: "shuagou",
+      mapId: "driftdog",
       status: "lobby",
       playerCount: 0,
     });
@@ -151,7 +151,7 @@ describe("guest lobby API", () => {
       method: "POST",
       url: "/api/rooms",
       headers: { cookie: cookieHeader(app, owner) },
-      payload: { mapId: "shuagou" },
+      payload: { mapId: "driftdog" },
     });
     const { roomCode } = created.json();
 

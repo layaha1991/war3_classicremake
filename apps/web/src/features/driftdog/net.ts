@@ -40,9 +40,9 @@ export function newRoomCode(): string {
   return Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
 }
 
-export async function joinShuagou(roomCode: string, nickname: string): Promise<Room> {
+export async function joinDriftDog(roomCode: string, nickname: string): Promise<Room> {
   const client = new Client(colyseusUrl());
-  const room = await client.joinOrCreate("shuagou", { roomCode, nickname });
+  const room = await client.joinOrCreate("driftdog", { roomCode, nickname });
   await waitForRoomState(room);
   return room;
 }

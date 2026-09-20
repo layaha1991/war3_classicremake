@@ -2,12 +2,12 @@ import { matchMaker, Server } from "colyseus";
 import { WebSocketTransport } from "@colyseus/ws-transport";
 import type { Server as HttpServer } from "node:http";
 import type { FastifyInstance } from "fastify";
-import { ShuagouRoom } from "./modules/shuagou/shuagou-room.js";
+import { DriftDogRoom } from "./modules/driftdog/room.js";
 
 export function registerMatchmakeRoutes(app: FastifyInstance): void {
   app.get("/api/rooms", async () => {
     try {
-      const rooms = await matchMaker.query({ name: "shuagou" });
+      const rooms = await matchMaker.query({ name: "driftdog" });
       return {
         rooms: rooms.map((room) => ({
           roomCode: String((room.metadata as { roomCode?: string } | undefined)?.roomCode ?? room.roomId)
@@ -36,6 +36,6 @@ export function attachGameServer(httpServer: HttpServer): Server {
   const gameServer = new Server({
     transport: new WebSocketTransport({ server: httpServer }),
   });
-  gameServer.define("shuagou", ShuagouRoom).filterBy(["roomCode"]);
+  gameServer.define("driftdog", DriftDogRoom).filterBy(["roomCode"]);
   return gameServer;
 }

@@ -8,14 +8,13 @@ export {
 } from "./maps/registry.js";
 export {
   ARENA,
-  BLINK_COOLDOWN,
-  BLINK_DISTANCE,
-  DEFAULT_MATCH_TIME,
-  DEFAULT_SCORE_TO_WIN,
+  BALL_FLY_SPEED,
   DT,
+  PARAMS,
   RAY_MAX_DIST,
+  STARTING_HEARTS,
   TICK_RATE,
-} from "./shuagou/constants.js";
+} from "./driftdog/constants.js";
 export {
   addPlayer,
   blink,
@@ -25,7 +24,7 @@ export {
   removePlayer,
   step,
   throwBall,
-} from "./shuagou/sim.js";
+} from "./driftdog/sim.js";
 export type {
   BallState,
   DogState,
@@ -35,4 +34,4 @@ export type {
   PlayerState,
   SimEvent,
   StepResult,
-} from "./shuagou/types.js";
+} from "./driftdog/types.js";

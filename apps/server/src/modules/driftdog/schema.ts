@@ -9,8 +9,8 @@ export class PlayerSchema extends Schema {
   @type("number") vy = 0;
   @type("number") heading = 0;
   @type("boolean") hasBall = false;
-  @type("number") score = 0;
-  @type("number") blinkCd = 0;
+  @type("number") hearts = 2;
+  @type("boolean") alive = true;
 }
 
 export class BallSchema extends Schema {
@@ -19,24 +19,23 @@ export class BallSchema extends Schema {
   @type("number") vx = 0;
   @type("number") vy = 0;
   @type("string") ownerId = "";
-  @type("number") spin = 0;
+  @type("string") flightToId = "";
 }
 
 export class DogSchema extends Schema {
-  @type("number") x = 80;
-  @type("number") y = 720;
+  @type("number") x = 600;
+  @type("number") y = 400;
   @type("number") vx = 0;
   @type("number") vy = 0;
   @type("number") heading = 0;
+  @type("number") speed = 70;
 }
 
-export class ShuagouState extends Schema {
+export class DriftDogState extends Schema {
   @type("string") phase = "lobby";
   @type({ map: PlayerSchema }) players = new MapSchema<PlayerSchema>();
   @type(BallSchema) ball = new BallSchema();
   @type(DogSchema) dog = new DogSchema();
-  @type("number") timer = 180;
-  @type("number") scoreToWin = 5;
-  @type("string") lastShout = "";
+  @type("number") timer = 0;
   @type("string") roomCode = "";
 }

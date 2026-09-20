@@ -25,12 +25,12 @@ describe("lobby api", () => {
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: async () => ({ mapId: "shuagou", status: "lobby", playerCount: 0 }),
+        json: async () => ({ mapId: "driftdog", status: "lobby", playerCount: 0 }),
       });
     const api = createLobbyApi(fetchMock as unknown as typeof fetch);
-    await expect(api.createRoom("shuagou")).resolves.toEqual({ roomCode: "ABC123" });
+    await expect(api.createRoom("driftdog")).resolves.toEqual({ roomCode: "ABC123" });
     await expect(api.getRoom("ABC123")).resolves.toEqual({
-      mapId: "shuagou",
+      mapId: "driftdog",
       status: "lobby",
       playerCount: 0,
     });
