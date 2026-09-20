@@ -34,7 +34,7 @@ export async function buildApp(options: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
         connectSrc: ["'self'", "ws:", "wss:"],
-        imgSrc: ["'self'", "data:"],
+        imgSrc: ["'self'", "data:", "blob:"],
         styleSrc: ["'self'", "https:", "'unsafe-inline'"],
         fontSrc: ["'self'", "https:", "data:"],
       },

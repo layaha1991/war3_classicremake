@@ -172,4 +172,10 @@ describe("guest lobby API", () => {
     const missing = await app.inject({ method: "GET", url: `/api/rooms/${roomCode}` });
     expect(missing.statusCode).toBe(404);
   });
+
+  it("allows Phaser to draw images from blob URLs", async () => {
+    app = await createGuestApp();
+    const response = await app.inject({ method: "GET", url: "/api/rooms" });
+    expect(response.headers["content-security-policy"]).toMatch(/img-src [^;]*blob:/);
+  });
 });
