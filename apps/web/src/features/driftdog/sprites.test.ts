@@ -2,16 +2,30 @@ import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { facingFromHeading, facingRow, ripplePulse, shouldFlipX, walkFrame } from "./sprites.js";
+import { facingFromCompassDeg, facingFromHeading, facingFromMotion, facingRow, ripplePulse, shouldFlipX, walkFrame } from "./sprites.js";
 
 describe("2d sprite helpers", () => {
-  it("maps heading into four walk directions", () => {
+  it("maps 360° compass with 0 at the top into four walk directions", () => {
+    expect(facingFromCompassDeg(0)).toBe("up");
+    expect(facingFromCompassDeg(-45)).toBe("up");
+    expect(facingFromCompassDeg(44)).toBe("up");
+    expect(facingFromCompassDeg(45)).toBe("right");
+    expect(facingFromCompassDeg(90)).toBe("right");
+    expect(facingFromCompassDeg(135)).toBe("down");
+    expect(facingFromCompassDeg(180)).toBe("down");
+    expect(facingFromCompassDeg(225)).toBe("left");
+    expect(facingFromCompassDeg(270)).toBe("left");
+    expect(facingFromCompassDeg(315)).toBe("up");
+    expect(facingFromHeading(-Math.PI / 2)).toBe("up");
     expect(facingFromHeading(0)).toBe("right");
     expect(facingFromHeading(Math.PI / 2)).toBe("down");
     expect(facingFromHeading(Math.PI)).toBe("left");
-    expect(facingFromHeading(-Math.PI / 2)).toBe("up");
+    expect(facingFromMotion(0, 0, -80)).toBe("up");
+    expect(facingFromMotion(Math.PI, 80, 0)).toBe("right");
+    expect(facingFromMotion(0, 0, 0)).toBe("right");
+    expect(facingRow("right", "player")).toBe(2);
     expect(facingRow("right", "dog")).toBe(2);
-    expect(shouldFlipX("right", "player")).toBe(true);
+    expect(shouldFlipX("right", "player")).toBe(false);
     expect(shouldFlipX("right", "dog")).toBe(false);
   });
 

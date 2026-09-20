@@ -14,36 +14,55 @@ export const SPRITES = {
   dogDisplay: 120,
 } as const;
 
-export function facingFromHeading(heading: number): Facing {
-  const tau = Math.PI * 2;
-  const angle = ((heading % tau) + tau) % tau;
-  if (angle >= (Math.PI * 7) / 4 || angle < Math.PI / 4) {
-    return "right";
-  }
-  if (angle < (Math.PI * 3) / 4) {
-    return "down";
-  }
-  if (angle < (Math.PI * 5) / 4) {
-    return "left";
-  }
-  return "up";
+/** Compass degrees: 0 is up / away from camera, clockwise. */
+export function wrapDegrees(deg: number): number {
+  return ((deg % 360) + 360) % 360;
 }
 
-export function facingRow(facing: Facing, sheet: "player" | "dog" = "player"): number {
+export function compassDegFromHeading(heading: number): number {
+  return wrapDegrees((heading * 180) / Math.PI + 90);
+}
+
+export function facingFromCompassDeg(deg: number): Facing {
+  const angle = wrapDegrees(deg);
+  if (angle >= 315 || angle < 45) {
+    return "up";
+  }
+  if (angle < 135) {
+    return "right";
+  }
+  if (angle < 225) {
+    return "down";
+  }
+  return "left";
+}
+
+export function facingFromHeading(heading: number): Facing {
+  return facingFromCompassDeg(compassDegFromHeading(heading));
+}
+
+export function facingFromMotion(heading: number, vx: number, vy: number): Facing {
+  if (isMoving(vx, vy)) {
+    return facingFromHeading(Math.atan2(vy, vx));
+  }
+  return facingFromHeading(heading);
+}
+
+export function facingRow(facing: Facing, _sheet: "player" | "dog" = "player"): number {
   if (facing === "down") {
     return 0;
   }
-  if (facing === "up") {
-    return 3;
+  if (facing === "left") {
+    return 1;
   }
-  if (sheet === "dog") {
-    return facing === "left" ? 1 : 2;
+  if (facing === "right") {
+    return 2;
   }
-  return 1;
+  return 3;
 }
 
-export function shouldFlipX(facing: Facing, sheet: "player" | "dog" = "player"): boolean {
-  return sheet === "player" && facing === "right";
+export function shouldFlipX(_facing: Facing, _sheet: "player" | "dog" = "player"): boolean {
+  return false;
 }
 
 export function walkFrame(elapsedMs: number, moving: boolean, frames = SPRITES.framesPerDir, fps = SPRITES.fps): number {
@@ -58,8 +77,10 @@ export function spriteFrameIndex(
   elapsedMs: number,
   moving: boolean,
   sheet: "player" | "dog" = "player",
+  vx = 0,
+  vy = 0,
 ): number {
-  return facingRow(facingFromHeading(heading), sheet) * SPRITES.columns + walkFrame(elapsedMs, moving);
+  return facingRow(facingFromMotion(heading, vx, vy), sheet) * SPRITES.columns + walkFrame(elapsedMs, moving);
 }
 
 export function ripplePulse(elapsedMs: number): { scale: number; alpha: number } {
