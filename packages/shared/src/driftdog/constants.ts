@@ -13,16 +13,19 @@ export const PARAMS = {
     /** Instant analog speed at stick rim. Players have no drift. */
     speed: 220,
     radius: 36,
+    displayWidth: 96,
+    /** Twice the original 96px height. */
+    displayHeight: 192,
   },
   ball: {
     radius: 16,
-    carryOffset: 40,
+    carryOffset: 80,
     /** Pixels per second while a pass is in the air. Higher = quicker flight. */
     flySpeed: 480,
     catchRange: 36,
   },
   dog: {
-    radius: 42,
+    radius: 168,
     startX: 540,
     startY: 768,
     /** Speed after spawn / after a tag reset. */
@@ -34,7 +37,8 @@ export const PARAMS = {
     turnRate: 1.05,
     /** Lower = more slip. Velocity lags behind heading. */
     drift: 0.7,
-    catchRange: 64,
+    display: 480,
+    catchRange: 256,
     stun: 1.4,
   },
   lives: {

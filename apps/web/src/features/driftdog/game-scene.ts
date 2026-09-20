@@ -418,16 +418,16 @@ export class DriftDogScene extends Phaser.Scene {
     });
     if (!this.dogs.has(id)) {
       const color = DOG_COLORS[this.dogs.size % DOG_COLORS.length] ?? 0xffffff;
-      const body = this.add.sprite(player.x, player.y, SPRITES.playerKey, 0).setDisplaySize(SPRITES.playerDisplay, SPRITES.playerDisplay).setDepth(7);
+      const body = this.add.sprite(player.x, player.y, SPRITES.playerKey, 0).setDisplaySize(SPRITES.playerDisplayWidth, SPRITES.playerDisplayHeight).setDepth(7);
       body.setTint(color);
       this.dogs.set(id, body);
       this.outlines.set(
         id,
-        this.add.circle(player.x, player.y, SPRITES.playerDisplay / 2 + 4, color, 0).setStrokeStyle(3, 0x081c15).setDepth(6.5),
+        this.add.circle(player.x, player.y, SPRITES.playerDisplayWidth / 2 + 4, color, 0).setStrokeStyle(3, 0x081c15).setDepth(6.5),
       );
       this.names.set(
         id,
-        this.add.text(player.x, player.y - SPRITES.playerDisplay / 2 - 12, player.name, {
+        this.add.text(player.x, player.y - SPRITES.playerDisplayHeight / 2 - 12, player.name, {
           fontFamily: "PingFang TC, Hiragino Sans GB, Noto Sans TC, sans-serif",
           fontSize: "22px",
           color: "#f8f9fa",
@@ -450,6 +450,6 @@ export class DriftDogScene extends Phaser.Scene {
     outline?.setStrokeStyle(local && player.alive ? 5 : 3, local && player.alive ? 0xffffff : player.alive ? 0x081c15 : 0x6c757d);
     outline?.setAlpha(player.alive ? 0.9 : 0.3);
     const tag = !player.alive ? " · 倒地" : player.hasBall ? " · 球" : "";
-    label?.setPosition(player.x, player.y - SPRITES.playerDisplay / 2 - 12).setText(`${player.name}${tag}`);
+    label?.setPosition(player.x, player.y - SPRITES.playerDisplayHeight / 2 - 12).setText(`${player.name}${tag}`);
   }
 }

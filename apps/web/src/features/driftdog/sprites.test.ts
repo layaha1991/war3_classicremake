@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { facingFromCompassDeg, facingFromHeading, facingFromMotion, facingRow, ripplePulse, shouldFlipX, walkFrame } from "./sprites.js";
+import { SPRITES, facingFromCompassDeg, facingFromHeading, facingFromMotion, facingRow, ripplePulse, shouldFlipX, walkFrame } from "./sprites.js";
 
 describe("2d sprite helpers", () => {
   it("maps 360° compass with 0 at the top into four walk directions", () => {
@@ -50,5 +50,8 @@ describe("2d sprite helpers", () => {
     const publicDir = resolve(here, "../../../public");
     expect(existsSync(resolve(publicDir, "driftdog/player-walk.png"))).toBe(true);
     expect(existsSync(resolve(publicDir, "driftdog/dog-walk.png"))).toBe(true);
+    expect(SPRITES.playerDisplayWidth).toBe(96);
+    expect(SPRITES.playerDisplayHeight).toBe(192);
+    expect(SPRITES.dogDisplay).toBe(480);
   });
 });
