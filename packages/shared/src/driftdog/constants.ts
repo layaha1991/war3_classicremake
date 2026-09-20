@@ -7,22 +7,24 @@ export const PARAMS = {
     width: 1080,
     height: 1920,
   },
+  /** Bottom fraction reserved for touch controls. */
+  controlBand: 0.2,
   player: {
     /** Instant analog speed at stick rim. Players have no drift. */
     speed: 220,
-    radius: 18,
+    radius: 36,
   },
   ball: {
-    radius: 10,
-    carryOffset: 22,
+    radius: 16,
+    carryOffset: 40,
     /** Pixels per second while a pass is in the air. Higher = quicker flight. */
     flySpeed: 480,
-    catchRange: 24,
+    catchRange: 36,
   },
   dog: {
-    radius: 20,
+    radius: 42,
     startX: 540,
-    startY: 960,
+    startY: 768,
     /** Speed after spawn / after a tag reset. */
     initialSpeed: 70,
     /** Speed added per second while chasing, up to maxSpeed. */
@@ -32,7 +34,7 @@ export const PARAMS = {
     turnRate: 1.05,
     /** Lower = more slip. Velocity lags behind heading. */
     drift: 0.7,
-    catchRange: 34,
+    catchRange: 64,
     stun: 1.4,
   },
   lives: {
@@ -47,6 +49,8 @@ export const PARAMS = {
 export const TICK_RATE = PARAMS.tickRate;
 export const DT = 1 / TICK_RATE;
 export const ARENA = PARAMS.arena;
+export const CONTROL_BAND = PARAMS.controlBand;
+export const PLAYABLE_HEIGHT = ARENA.height * (1 - CONTROL_BAND);
 export const PLAYER_SPEED = PARAMS.player.speed;
 export const PLAYER_RADIUS = PARAMS.player.radius;
 export const BALL_RADIUS = PARAMS.ball.radius;

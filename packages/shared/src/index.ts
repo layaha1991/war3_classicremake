@@ -9,6 +9,7 @@ export {
 export {
   ARENA,
   BALL_FLY_SPEED,
+  PLAYABLE_HEIGHT,
   DT,
   PARAMS,
   RAY_MAX_DIST,

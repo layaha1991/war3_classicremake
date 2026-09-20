@@ -15,6 +15,7 @@ import {
   DT,
   PLAYER_RADIUS,
   PLAYER_SPEED,
+  PLAYABLE_HEIGHT,
   PARAMS,
   RAY_HIT_WIDTH,
   RAY_MAX_DIST,
@@ -65,7 +66,7 @@ function cloneState(state: MatchState): MatchState {
 function clampEntity(x: number, y: number, radius: number): { x: number; y: number } {
   return {
     x: clamp(x, radius, ARENA.width - radius),
-    y: clamp(y, radius, ARENA.height - radius),
+    y: clamp(y, radius, PLAYABLE_HEIGHT - radius),
   };
 }
 
@@ -111,7 +112,7 @@ export function createMatch(options: CreateMatchOptions = {}): MatchState {
     players: {},
     ball: {
       x: options.ball?.x ?? ARENA.width / 2,
-      y: options.ball?.y ?? ARENA.height / 2,
+      y: options.ball?.y ?? PLAYABLE_HEIGHT / 2,
       vx: 0,
       vy: 0,
       ownerId: null,
@@ -136,7 +137,7 @@ export function createMatch(options: CreateMatchOptions = {}): MatchState {
 
 export function addPlayer(state: MatchState, id: string, options: AddPlayerOptions = {}): MatchState {
   const next = cloneState(state);
-  const spawn = clampEntity(options.x ?? ARENA.width / 2, options.y ?? ARENA.height / 2, PLAYER_RADIUS);
+  const spawn = clampEntity(options.x ?? ARENA.width / 2, options.y ?? PLAYABLE_HEIGHT / 2, PLAYER_RADIUS);
   next.players[id] = {
     id,
     x: spawn.x,

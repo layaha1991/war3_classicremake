@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addPlayer, createMatch, passBall, playerHitByRay, removePlayer, restartMatch, step } from "./sim.js";
-import { ARENA, DT, PARAMS } from "./constants.js";
+import { ARENA, DT, PARAMS, PLAYABLE_HEIGHT } from "./constants.js";
 
 function stick(moveX = 0, moveY = 0) {
   return { up: false, down: false, left: false, right: false, moveX, moveY };
@@ -18,10 +18,21 @@ function run(state: ReturnType<typeof createMatch>, frames: number, inputs: Para
 }
 
 describe("driftdog simulation", () => {
-  it("uses a portrait 1080 by 1920 arena with the dog in the center", () => {
+  it("uses a portrait 1080 by 1920 arena with the dog in the playable center", () => {
     expect(ARENA).toEqual({ width: 1080, height: 1920 });
+    expect(PARAMS.controlBand).toBe(0.2);
+    expect(PLAYABLE_HEIGHT).toBe(1536);
     expect(PARAMS.dog.startX).toBe(ARENA.width / 2);
-    expect(PARAMS.dog.startY).toBe(ARENA.height / 2);
+    expect(PARAMS.dog.startY).toBe(PLAYABLE_HEIGHT / 2);
+    expect(PARAMS.player.radius).toBeGreaterThanOrEqual(32);
+  });
+
+  it("keeps players out of the bottom control strip", () => {
+    let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 540, y: 1800 });
+    state.dog.stun = 99;
+    expect(state.players.a.y).toBeLessThanOrEqual(PLAYABLE_HEIGHT - PARAMS.player.radius);
+    const down = run(state, 30, { a: stick(0, 1) });
+    expect(down.state.players.a.y).toBeLessThanOrEqual(PLAYABLE_HEIGHT - PARAMS.player.radius);
   });
 
   it("gives the ball to the first living player and keeps it off the ground when held", () => {
@@ -72,7 +83,7 @@ describe("driftdog simulation", () => {
     let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 600, y: 80 });
     state = addPlayer(state, "b", { x: 80, y: 720 });
     expect(state.dog.x).toBeCloseTo(ARENA.width / 2);
-    expect(state.dog.y).toBeCloseTo(ARENA.height / 2);
+    expect(state.dog.y).toBeCloseTo(PLAYABLE_HEIGHT / 2);
     expect(state.dog.speed).toBe(PARAMS.dog.initialSpeed);
     const startSpeed = state.dog.speed;
     ({ state } = run(state, 20, { a: stick(), b: stick() }));
@@ -146,7 +157,7 @@ describe("driftdog simulation", () => {
     expect(next.players.a.x).toBe(280);
     expect(next.players.b.x).toBe(920);
     expect(next.dog.x).toBeCloseTo(ARENA.width / 2);
-    expect(next.dog.y).toBeCloseTo(ARENA.height / 2);
+    expect(next.dog.y).toBeCloseTo(PLAYABLE_HEIGHT / 2);
     expect(["a", "b"]).toContain(next.ball.ownerId);
   });
 

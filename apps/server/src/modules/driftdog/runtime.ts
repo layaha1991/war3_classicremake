@@ -1,5 +1,6 @@
 import {
   ARENA,
+  PLAYABLE_HEIGHT,
   addPlayer,
   createMatch,
   DT,
@@ -15,14 +16,14 @@ import {
 import { sanitizeInput, sanitizeNickname } from "./sanitize-input.js";
 
 const SPAWNS = [
-  { x: 220, y: 420 },
-  { x: 860, y: 420 },
-  { x: 220, y: 1500 },
-  { x: 860, y: 1500 },
-  { x: 540, y: 280 },
-  { x: 540, y: 1640 },
-  { x: 160, y: 960 },
-  { x: 920, y: 960 },
+  { x: 240, y: 360 },
+  { x: 840, y: 360 },
+  { x: 240, y: 1280 },
+  { x: 840, y: 1280 },
+  { x: 540, y: 240 },
+  { x: 540, y: 1400 },
+  { x: 180, y: 768 },
+  { x: 900, y: 768 },
 ];
 
 export class DriftDogRuntime {
@@ -34,7 +35,7 @@ export class DriftDogRuntime {
   join(playerId: string, nickname: unknown): void {
     const spawn = SPAWNS[Object.keys(this.sim.players).length] ?? {
       x: ARENA.width / 2,
-      y: ARENA.height / 2,
+      y: PLAYABLE_HEIGHT / 2,
     };
     this.names[playerId] = sanitizeNickname(nickname);
     this.sim = addPlayer(this.sim, playerId, spawn);

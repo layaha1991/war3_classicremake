@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { Room } from "@colyseus/sdk";
-import { ARENA, DT, RAY_MAX_DIST, playerHitByRay, type SimEvent } from "@war3/shared";
+import { ARENA, DT, PARAMS, PLAYABLE_HEIGHT, RAY_MAX_DIST, playerHitByRay, type SimEvent } from "@war3/shared";
 import { CHASE_DOG, chaseDogAngle } from "./chase-dog.js";
 import { formatRoster, waitingCopy } from "./hud.js";
 import { interpolateEntity } from "./interpolate.js";
@@ -33,7 +33,7 @@ interface RemoteBall {
 }
 
 const DOG_COLORS = [0xf4d35e, 0xee964b, 0xf95738, 0x0d3b66, 0x28afb0, 0x9b5de5, 0x00bbf9, 0xfee440];
-const PLAYER_HIT_RADIUS = 18;
+const PLAYER_HIT_RADIUS = PARAMS.player.radius;
 
 export class DriftDogScene extends Phaser.Scene {
   private room!: Room;
@@ -44,10 +44,10 @@ export class DriftDogScene extends Phaser.Scene {
   private chaseDog?: Phaser.GameObjects.Image;
   private previous = new Map<string, RemotePlayer>();
   private current = new Map<string, RemotePlayer>();
-  private previousBall: RemoteBall = { x: ARENA.width / 2, y: ARENA.height / 2, ownerId: "" };
-  private currentBall: RemoteBall = { x: ARENA.width / 2, y: ARENA.height / 2, ownerId: "" };
-  private previousDog = { x: ARENA.width / 2, y: ARENA.height / 2, heading: 0 };
-  private currentDog = { x: ARENA.width / 2, y: ARENA.height / 2, heading: 0 };
+  private previousBall: RemoteBall = { x: ARENA.width / 2, y: PLAYABLE_HEIGHT / 2, ownerId: "" };
+  private currentBall: RemoteBall = { x: ARENA.width / 2, y: PLAYABLE_HEIGHT / 2, ownerId: "" };
+  private previousDog = { x: ARENA.width / 2, y: PLAYABLE_HEIGHT / 2, heading: 0 };
+  private currentDog = { x: ARENA.width / 2, y: PLAYABLE_HEIGHT / 2, heading: 0 };
   private keys!: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
   private scoreText?: Phaser.GameObjects.Text;
   private bannerText?: Phaser.GameObjects.Text;
@@ -79,10 +79,17 @@ export class DriftDogScene extends Phaser.Scene {
 
   create(): void {
     (window as unknown as { __driftdogCreated?: boolean }).__driftdogCreated = true;
-    this.cameras.main.setBackgroundColor("#1b4332");
-    this.add.rectangle(ARENA.width / 2, ARENA.height / 2, ARENA.width - 40, ARENA.height - 40, 0x2d6a4f);
-    this.add.circle(ARENA.width / 2, ARENA.height / 2, 70, 0x40916c, 0.35);
-    this.ball = this.add.circle(ARENA.width / 2, ARENA.height / 2, 10, 0xfff3b0).setStrokeStyle(2, 0x000000);
+    this.cameras.main.setBackgroundColor("#081c15");
+    this.add.rectangle(ARENA.width / 2, PLAYABLE_HEIGHT / 2, ARENA.width, PLAYABLE_HEIGHT, 0x2d6a4f);
+    this.add.rectangle(
+      ARENA.width / 2,
+      PLAYABLE_HEIGHT + (ARENA.height - PLAYABLE_HEIGHT) / 2,
+      ARENA.width,
+      ARENA.height - PLAYABLE_HEIGHT,
+      0x0a0a0a,
+    ).setDepth(18);
+    this.add.circle(ARENA.width / 2, PLAYABLE_HEIGHT / 2, 90, 0x40916c, 0.35);
+    this.ball = this.add.circle(ARENA.width / 2, PLAYABLE_HEIGHT / 2, PARAMS.ball.radius, 0xfff3b0).setStrokeStyle(2, 0x000000);
     this.chaseDog = this.buildChaseDog();
     this.keys = (this.input.keyboard?.addKeys("W,A,S,D") ?? {
       W: { isDown: false },
@@ -189,7 +196,7 @@ export class DriftDogScene extends Phaser.Scene {
 
   private buildChaseDog(): Phaser.GameObjects.Image {
     return this.add
-      .image(ARENA.width / 2, ARENA.height / 2, CHASE_DOG.key)
+      .image(ARENA.width / 2, PLAYABLE_HEIGHT / 2, CHASE_DOG.key)
       .setDisplaySize(CHASE_DOG.displayWidth, CHASE_DOG.displayHeight)
       .setDepth(8);
   }
@@ -370,10 +377,10 @@ export class DriftDogScene extends Phaser.Scene {
     });
     if (!this.dogs.has(id)) {
       const color = DOG_COLORS[this.dogs.size % DOG_COLORS.length] ?? 0xffffff;
-      this.dogs.set(id, this.add.circle(player.x, player.y, 18, color).setStrokeStyle(3, 0x081c15));
+      this.dogs.set(id, this.add.circle(player.x, player.y, PARAMS.player.radius, color).setStrokeStyle(3, 0x081c15));
       this.names.set(
         id,
-        this.add.text(player.x, player.y - 28, player.name, {
+        this.add.text(player.x, player.y - PARAMS.player.radius - 16, player.name, {
           fontFamily: "PingFang TC, Hiragino Sans GB, Noto Sans TC, sans-serif",
           fontSize: "22px",
           color: "#f8f9fa",
@@ -394,6 +401,6 @@ export class DriftDogScene extends Phaser.Scene {
       dog?.setStrokeStyle(3, player.alive ? 0x081c15 : 0x6c757d);
     }
     const tag = !player.alive ? " · 倒地" : player.hasBall ? " · 球" : "";
-    label?.setPosition(player.x, player.y - 28).setText(`${player.name}${tag}`);
+    label?.setPosition(player.x, player.y - PARAMS.player.radius - 16).setText(`${player.name}${tag}`);
   }
 }
