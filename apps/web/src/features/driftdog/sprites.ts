@@ -10,7 +10,7 @@ export const SPRITES = {
   rows: 4,
   framesPerDir: 4,
   fps: 8,
-  playerDisplayWidth: 96,
+  playerDisplayWidth: 192,
   playerDisplayHeight: 192,
   dogDisplay: 480,
 } as const;

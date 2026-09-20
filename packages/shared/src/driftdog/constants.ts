@@ -11,10 +11,10 @@ export const PARAMS = {
   controlBand: 0.2,
   player: {
     /** Instant analog speed at stick rim. Players have no drift. */
-    speed: 220,
+    speed: 440,
     radius: 36,
-    displayWidth: 96,
-    /** Twice the original 96px height. */
+    displayWidth: 192,
+    /** Twice the original 96px size, kept square so the sprite is not stretched. */
     displayHeight: 192,
     /** Five body lengths (uses the taller visual height). */
     blinkDistance: 960,
