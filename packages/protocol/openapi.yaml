@@ -74,6 +74,35 @@ paths:
                 $ref: "#/components/schemas/RoomSummary"
         "404":
           description: Unknown room code
+    delete:
+      summary: Close a room you own
+      operationId: closeRoom
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+      responses:
+        "204":
+          description: Room closed
+        "401":
+          description: Missing guest session
+        "403":
+          description: Caller is not the room owner
+        "404":
+          description: Unknown room code
+  /api/auth/refresh:
+    post:
+      summary: Rotate the refresh token and issue a new access cookie
+      operationId: refreshGuest
+      responses:
+        "204":
+          description: Cookies rotated
+        "401":
+          description: Missing or reused refresh token
 components:
   schemas:
     RoomCreated:

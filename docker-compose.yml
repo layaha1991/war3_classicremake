@@ -35,6 +35,7 @@ services:
       DATABASE_URL: postgres://war3:war3@postgres:5432/war3
       REDIS_URL: redis://redis:6379
       PUBLIC_WEB_ORIGIN: http://localhost:8080
+      STORE_DRIVER: persist
     ports:
       - "2567:2567"
     depends_on:
