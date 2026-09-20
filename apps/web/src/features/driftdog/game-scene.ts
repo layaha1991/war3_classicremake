@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { Room } from "@colyseus/sdk";
 import { ARENA, DT, RAY_MAX_DIST, playerHitByRay, type SimEvent } from "@war3/shared";
+import { CHASE_DOG, chaseDogAngle } from "./chase-dog.js";
 import { formatRoster, waitingCopy } from "./hud.js";
 import { interpolateEntity } from "./interpolate.js";
 import {
@@ -40,7 +41,7 @@ export class DriftDogScene extends Phaser.Scene {
   private dogs = new Map<string, Phaser.GameObjects.Arc>();
   private names = new Map<string, Phaser.GameObjects.Text>();
   private ball?: Phaser.GameObjects.Arc;
-  private chaseDog?: Phaser.GameObjects.Container;
+  private chaseDog?: Phaser.GameObjects.Image;
   private previous = new Map<string, RemotePlayer>();
   private current = new Map<string, RemotePlayer>();
   private previousBall: RemoteBall = { x: ARENA.width / 2, y: ARENA.height / 2, ownerId: "" };
@@ -70,6 +71,10 @@ export class DriftDogScene extends Phaser.Scene {
     }
     this.room = room;
     this.localId = room.sessionId;
+  }
+
+  preload(): void {
+    this.load.image(CHASE_DOG.key, CHASE_DOG.path);
   }
 
   create(): void {
@@ -178,16 +183,11 @@ export class DriftDogScene extends Phaser.Scene {
     this.aimKnob = this.add.circle(aimHome.x, aimHome.y, 28, 0xf95738, 0.9).setStrokeStyle(2, 0x081c15).setDepth(21);
   }
 
-  private buildChaseDog(): Phaser.GameObjects.Container {
-    const rump = this.add.circle(-16, 2, 11, 0x6b3e1a);
-    const body = this.add.ellipse(0, 0, 48, 22, 0x8d5524);
-    const tail = this.add.ellipse(-28, -6, 16, 6, 0xa66b2d);
-    const head = this.add.circle(20, -2, 11, 0x5c3317);
-    const ear = this.add.triangle(14, -16, 0, 12, 10, 0, -6, 0, 0x3d2314);
-    const snout = this.add.triangle(32, 0, 0, -6, 16, 0, 0, 6, 0x3d2314);
-    const container = this.add.container(80, 720, [rump, tail, body, head, ear, snout]);
-    container.setDepth(8);
-    return container;
+  private buildChaseDog(): Phaser.GameObjects.Image {
+    return this.add
+      .image(80, 720, CHASE_DOG.key)
+      .setDisplaySize(CHASE_DOG.displayWidth, CHASE_DOG.displayHeight)
+      .setDepth(8);
   }
 
   private stickHome(side: "move" | "aim"): { x: number; y: number } {
@@ -355,7 +355,7 @@ export class DriftDogScene extends Phaser.Scene {
     while (turn > Math.PI) turn -= Math.PI * 2;
     while (turn < -Math.PI) turn += Math.PI * 2;
     this.chaseDog?.setPosition(dogPose.x, dogPose.y);
-    this.chaseDog?.setRotation(this.previousDog.heading + turn * 0.4);
+    this.chaseDog?.setRotation(chaseDogAngle(this.previousDog.heading + turn * 0.4));
   }
 
   private upsertDog(id: string, player: RemotePlayer): void {
