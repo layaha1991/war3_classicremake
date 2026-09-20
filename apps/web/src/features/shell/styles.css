@@ -123,8 +123,28 @@ button.ghost {
 }
 
 #game {
+  position: relative;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
   background: #081c15;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#game canvas {
+  touch-action: none;
+}
+
+.pads {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  z-index: 4;
+}
+
+.pad {
+  flex: 1;
+  touch-action: none;
 }

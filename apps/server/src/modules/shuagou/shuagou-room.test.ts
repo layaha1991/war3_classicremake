@@ -26,4 +26,14 @@ describe("ShuagouRuntime", () => {
     expect(runtime.sim.players.a.x).not.toBe(12);
     expect(runtime.sim.players.a.y).not.toBe(12);
   });
+
+  it("passes the ball when the aim heading hits another player", () => {
+    const runtime = new ShuagouRuntime();
+    runtime.join("a", "拓海");
+    runtime.join("b", "武");
+    expect(runtime.sim.ball.ownerId).toBe("a");
+    runtime.handlePass("a", 0);
+    expect(runtime.sim.ball.ownerId).toBe("b");
+    expect(runtime.sim.players.b.hasBall).toBe(true);
+  });
 });

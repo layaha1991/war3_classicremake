@@ -7,6 +7,7 @@ import {
   DOG_CATCH_RANGE,
   DOG_DRIFT,
   DOG_SPEED,
+  DOG_STUN,
   DOG_TURN_RATE,
   PLAYER_RADIUS,
   PLAYER_SPEED,
@@ -102,6 +103,7 @@ export function createMatch(options: CreateMatchOptions = {}): MatchState {
       vx: 0,
       vy: 0,
       heading: 0,
+      stun: 0,
     },
     timer: options.timer ?? DEFAULT_MATCH_TIME,
     scoreToWin: options.scoreToWin ?? DEFAULT_SCORE_TO_WIN,
@@ -249,6 +251,15 @@ function stepDog(state: MatchState, events: SimEvent[], dt: number): void {
     return;
   }
   const dog: DogState = state.dog;
+  dog.stun = Math.max(0, (dog.stun ?? 0) - dt);
+  if (dog.stun > 0) {
+    dog.vx *= 0.86;
+    dog.vy *= 0.86;
+    const next = clampEntity(dog.x + dog.vx * dt, dog.y + dog.vy * dt, 20);
+    dog.x = next.x;
+    dog.y = next.y;
+    return;
+  }
   steer(
     dog,
     { x: holder.x - dog.x, y: holder.y - dog.y },
@@ -263,6 +274,9 @@ function stepDog(state: MatchState, events: SimEvent[], dt: number): void {
   }
   const nextOwner = otherPlayerId(state, holder.id);
   events.push({ type: "tagged", victimId: holder.id });
+  dog.stun = DOG_STUN;
+  dog.vx *= -0.35;
+  dog.vy *= -0.35;
   if (nextOwner && state.players[nextOwner]) {
     state.players[nextOwner].score += 1;
     events.push({ type: "score", playerId: nextOwner, score: state.players[nextOwner].score });

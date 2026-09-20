@@ -27,6 +27,7 @@ export const DOG_SPEED = 170;
 export const DOG_TURN_RATE = 2.4;
 export const DOG_DRIFT = 2.8;
 export const DOG_CATCH_RANGE = 32;
+export const DOG_STUN = 1.6;
 export const RAY_HIT_WIDTH = 26;
 export const RAY_MAX_DIST = 900;
 export const PLAYER_TURN_RATE = 7;

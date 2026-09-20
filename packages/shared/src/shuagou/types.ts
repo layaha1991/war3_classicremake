@@ -39,6 +39,7 @@ export interface DogState {
   vx: number;
   vy: number;
   heading: number;
+  stun: number;
 }
 
 export type MatchPhase = "lobby" | "playing" | "ended";

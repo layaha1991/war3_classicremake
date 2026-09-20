@@ -75,4 +75,21 @@ describe("shuagou simulation", () => {
     expect(after.state.ball.ownerId).toBe("b");
     expect(after.state.players.b.score).toBeGreaterThan(0);
   });
+
+  it("does not instantly re-tag after a catch so the new holder can pass", () => {
+    let state = addPlayer(createMatch({ phase: "playing", scoreToWin: 9 }), "a", {
+      x: 200,
+      y: 200,
+    });
+    state = addPlayer(state, "b", { x: 240, y: 200 });
+    state.dog.x = 210;
+    state.dog.y = 200;
+    const tagged = run(state, 8, { a: stick(), b: stick() });
+    expect(tagged.events.some((event) => event.type === "tagged")).toBe(true);
+    tagged.state.dog.x = tagged.state.players.b.x;
+    tagged.state.dog.y = tagged.state.players.b.y;
+    const after = run(tagged.state, 6, { a: stick(), b: stick() });
+    expect(after.events.some((event) => event.type === "tagged")).toBe(false);
+    expect(after.state.ball.ownerId).toBe("b");
+  });
 });
