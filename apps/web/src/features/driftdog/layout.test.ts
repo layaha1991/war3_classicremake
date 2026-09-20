@@ -11,5 +11,9 @@ describe("portrait touch layout", () => {
       y: ARENA.height - TOUCH.stickMarginY,
     });
     expect(stickHome("move").y).toBeGreaterThan(ARENA.height * 0.8);
+    expect(TOUCH.stickRadius).toBe(220);
+    expect(TOUCH.stickKnob).toBe(80);
+    expect(TOUCH.moveIcon).toBe("cross");
+    expect(TOUCH.aimIcon).toBe("pass");
   });
 });

@@ -70,6 +70,8 @@ export class DriftDogScene extends Phaser.Scene {
   private moveKnob?: Phaser.GameObjects.Arc;
   private aimBase?: Phaser.GameObjects.Arc;
   private aimKnob?: Phaser.GameObjects.Arc;
+  private moveIcon?: Phaser.GameObjects.Graphics;
+  private aimIcon?: Phaser.GameObjects.Graphics;
   private rayGfx?: Phaser.GameObjects.Graphics;
 
   constructor() {
@@ -220,10 +222,44 @@ export class DriftDogScene extends Phaser.Scene {
   private buildSticks(): void {
     const moveHome = stickHome("move");
     const aimHome = stickHome("aim");
-    this.moveBase = this.add.circle(moveHome.x, moveHome.y, TOUCH.stickRadius, 0xffffff, 0.08).setStrokeStyle(3, 0xffffff, 0.28).setDepth(20);
-    this.moveKnob = this.add.circle(moveHome.x, moveHome.y, 40, 0xf4d35e, 0.9).setStrokeStyle(3, 0x081c15).setDepth(21);
-    this.aimBase = this.add.circle(aimHome.x, aimHome.y, TOUCH.stickRadius, 0xffffff, 0.08).setStrokeStyle(3, 0xffffff, 0.28).setDepth(20);
-    this.aimKnob = this.add.circle(aimHome.x, aimHome.y, 40, 0xf95738, 0.9).setStrokeStyle(3, 0x081c15).setDepth(21);
+    this.moveBase = this.add.circle(moveHome.x, moveHome.y, TOUCH.stickRadius, 0xffffff, 0.08).setStrokeStyle(4, 0xffffff, 0.28).setDepth(20);
+    this.moveKnob = this.add.circle(moveHome.x, moveHome.y, TOUCH.stickKnob, 0xf4d35e, 0.9).setStrokeStyle(4, 0x081c15).setDepth(21);
+    this.aimBase = this.add.circle(aimHome.x, aimHome.y, TOUCH.stickRadius, 0xffffff, 0.08).setStrokeStyle(4, 0xffffff, 0.28).setDepth(20);
+    this.aimKnob = this.add.circle(aimHome.x, aimHome.y, TOUCH.stickKnob, 0xf95738, 0.9).setStrokeStyle(4, 0x081c15).setDepth(21);
+    this.moveIcon = this.add.graphics().setDepth(20.4);
+    this.aimIcon = this.add.graphics().setDepth(20.4);
+    this.paintStickIcons(moveHome, aimHome, 0.18);
+  }
+
+  private paintStickIcons(
+    move: { x: number; y: number },
+    aim: { x: number; y: number },
+    alpha: number,
+  ): void {
+    const fade = alpha > 0.2 ? 0.85 : 0.55;
+    const inner = 92;
+    const outer = 158;
+    const cross = this.moveIcon;
+    if (cross) {
+      cross.clear();
+      cross.lineStyle(12, 0xffffff, fade);
+      cross.lineBetween(move.x - outer, move.y, move.x - inner, move.y);
+      cross.lineBetween(move.x + inner, move.y, move.x + outer, move.y);
+      cross.lineBetween(move.x, move.y - outer, move.x, move.y - inner);
+      cross.lineBetween(move.x, move.y + inner, move.x, move.y + outer);
+    }
+    const pass = this.aimIcon;
+    if (pass) {
+      pass.clear();
+      pass.fillStyle(0xfff3b0, fade);
+      pass.fillCircle(aim.x, aim.y - 128, 26);
+      pass.lineStyle(6, 0xf95738, fade);
+      pass.strokeCircle(aim.x, aim.y - 128, 26);
+      pass.lineStyle(10, 0xffffff, fade);
+      pass.lineBetween(aim.x, aim.y + 96, aim.x, aim.y + 158);
+      pass.lineBetween(aim.x, aim.y + 158, aim.x - 22, aim.y + 132);
+      pass.lineBetween(aim.x, aim.y + 158, aim.x + 22, aim.y + 132);
+    }
   }
 
   private buildChaseDog(): Phaser.GameObjects.Sprite {
@@ -276,6 +312,7 @@ export class DriftDogScene extends Phaser.Scene {
       aimOrigin.x + aim.x * TOUCH.stickRadius,
       aimOrigin.y + aim.y * TOUCH.stickRadius,
     );
+    this.paintStickIcons(moveOrigin, aimOrigin, this.pads?.moveOrigin || this.pads?.aimOrigin ? 0.35 : 0.18);
   }
 
   private drawAimRay(local: RemotePlayer | undefined, aim: StickState): void {
