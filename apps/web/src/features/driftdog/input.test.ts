@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   aimRay,
+  facingForInput,
   readMoveInput,
   readVirtualStick,
   shouldPassOnRelease,
@@ -31,6 +32,13 @@ describe("virtual sticks", () => {
     expect(stick.heading).toBeCloseTo(0);
     expect(readMoveInput(stick).moveX).toBeCloseTo(1);
     expect(readMoveInput(stick).moveY).toBeCloseTo(0);
+    expect(readMoveInput(stick).facing).toBeUndefined();
+  });
+
+  it("locks facing only while the aim stick is held", () => {
+    expect(facingForInput({ active: true, x: 0, y: -1, heading: -Math.PI / 2, magnitude: 1 })).toBeCloseTo(-Math.PI / 2);
+    expect(facingForInput({ active: false, x: 0, y: 0, heading: 0, magnitude: 0 })).toBeUndefined();
+    expect(readMoveInput(readVirtualStick({ x: 0, y: 0 }, { x: 0, y: -80 }, 80)).facing).toBeUndefined();
   });
 
   it("builds an aim ray from the holder along the stick heading", () => {

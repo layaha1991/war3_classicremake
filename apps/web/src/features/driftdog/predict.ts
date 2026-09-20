@@ -4,7 +4,7 @@ export function predictLocal(
   player: { id: string; x: number; y: number; heading: number },
   input: PlayerInput,
   dt: number,
-): { x: number; y: number; heading: number } {
+): { x: number; y: number; heading: number; vx: number; vy: number } {
   let state = addPlayer(createMatch({ phase: "playing" }), player.id, {
     x: player.x,
     y: player.y,
@@ -12,5 +12,5 @@ export function predictLocal(
   });
   state = step(state, { [player.id]: input }, dt).state;
   const next = state.players[player.id];
-  return { x: next.x, y: next.y, heading: next.heading };
+  return { x: next.x, y: next.y, heading: next.heading, vx: next.vx, vy: next.vy };
 }

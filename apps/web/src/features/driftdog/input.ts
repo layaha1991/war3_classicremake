@@ -42,6 +42,10 @@ export function readVirtualStick(
   };
 }
 
+export function facingForInput(aim: Pick<StickState, "active" | "heading">): number | undefined {
+  return aim.active ? aim.heading : undefined;
+}
+
 export function readMoveInput(stick: StickState, facing?: number): PlayerInput {
   return {
     up: false,

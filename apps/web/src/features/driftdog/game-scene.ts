@@ -4,9 +4,10 @@ import { ARENA, DT, PARAMS, PLAYABLE_HEIGHT, RAY_MAX_DIST, playerHitByRay, type 
 import { formatRoster, waitingCopy } from "./hud.js";
 import { interpolateEntity } from "./interpolate.js";
 import { stickHome, TOUCH } from "./layout.js";
-import { SPRITES, facingFromHeading, isMoving, ripplePulse, shouldFlipX, spriteFrameIndex } from "./sprites.js";
+import { SPRITES, facingFromMotion, isMoving, ripplePulse, shouldFlipX, spriteFrameIndex } from "./sprites.js";
 import {
   aimRay,
+  facingForInput,
   readKeyboardInput,
   readMoveInput,
   type StickState,
@@ -177,9 +178,9 @@ export class DriftDogScene extends Phaser.Scene {
       return;
     }
 
-    const facing = aim.active ? aim.heading : local.heading;
+    const lockedFacing = facingForInput(aim);
     const input = move.active
-      ? readMoveInput(move, facing)
+      ? readMoveInput(move, lockedFacing)
       : readKeyboardInput(
           {
             W: this.keys.W.isDown,
@@ -190,8 +191,10 @@ export class DriftDogScene extends Phaser.Scene {
           { x: pointer.worldX, y: pointer.worldY },
           local,
         );
-    if (aim.active) {
-      input.facing = facing;
+    if (lockedFacing !== undefined) {
+      input.facing = lockedFacing;
+    } else {
+      delete input.facing;
     }
     this.room.send("input", input);
 
@@ -392,8 +395,10 @@ export class DriftDogScene extends Phaser.Scene {
     );
     const dogMoving = isMoving(this.currentDog.vx, this.currentDog.vy);
     this.chaseDog?.setPosition(dogPose.x, dogPose.y);
-    this.chaseDog?.setFlipX(shouldFlipX(facingFromHeading(this.currentDog.heading), "dog"));
-    this.chaseDog?.setFrame(spriteFrameIndex(this.currentDog.heading, this.time.now, dogMoving, "dog"));
+    this.chaseDog?.setFlipX(shouldFlipX(facingFromMotion(this.currentDog.heading, this.currentDog.vx, this.currentDog.vy), "dog"));
+    this.chaseDog?.setFrame(
+      spriteFrameIndex(this.currentDog.heading, this.time.now, dogMoving, "dog", this.currentDog.vx, this.currentDog.vy),
+    );
   }
 
   private upsertDog(id: string, player: RemotePlayer): void {
@@ -436,10 +441,10 @@ export class DriftDogScene extends Phaser.Scene {
     const outline = this.outlines.get(id);
     const label = this.names.get(id);
     const moving = player.alive && isMoving(player.vx, player.vy);
-    const facing = facingFromHeading(player.heading);
+    const facing = facingFromMotion(player.heading, player.vx, player.vy);
     body?.setPosition(player.x, player.y);
     body?.setFlipX(shouldFlipX(facing, "player"));
-    body?.setFrame(spriteFrameIndex(player.heading, this.time.now, moving, "player"));
+    body?.setFrame(spriteFrameIndex(player.heading, this.time.now, moving, "player", player.vx, player.vy));
     body?.setAlpha(player.alive ? 1 : 0.45);
     outline?.setPosition(player.x, player.y);
     outline?.setStrokeStyle(local && player.alive ? 5 : 3, local && player.alive ? 0xffffff : player.alive ? 0x081c15 : 0x6c757d);
