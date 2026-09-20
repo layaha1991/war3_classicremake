@@ -9,7 +9,7 @@ describe("driftdog hud", () => {
     expect(formatRoster([
       { name: "拓海", hearts: 2 },
       { name: "武", hearts: 1 },
-    ])).toBe("拓海 ♥♥    武 ♥♡");
+    ])).toBe("拓海 ♥♥\n武 ♥♡");
   });
 
   it("tells a lone player to wait and names the last survivor", () => {

@@ -4,8 +4,8 @@ import { ARENA, DT, RAY_MAX_DIST, playerHitByRay, type SimEvent } from "@war3/sh
 import { CHASE_DOG, chaseDogAngle } from "./chase-dog.js";
 import { formatRoster, waitingCopy } from "./hud.js";
 import { interpolateEntity } from "./interpolate.js";
+import { stickHome, TOUCH } from "./layout.js";
 import {
-  STICK_MAX_RADIUS,
   aimRay,
   readKeyboardInput,
   readMoveInput,
@@ -46,8 +46,8 @@ export class DriftDogScene extends Phaser.Scene {
   private current = new Map<string, RemotePlayer>();
   private previousBall: RemoteBall = { x: ARENA.width / 2, y: ARENA.height / 2, ownerId: "" };
   private currentBall: RemoteBall = { x: ARENA.width / 2, y: ARENA.height / 2, ownerId: "" };
-  private previousDog = { x: 600, y: 400, heading: 0 };
-  private currentDog = { x: 600, y: 400, heading: 0 };
+  private previousDog = { x: ARENA.width / 2, y: ARENA.height / 2, heading: 0 };
+  private currentDog = { x: ARENA.width / 2, y: ARENA.height / 2, heading: 0 };
   private keys!: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
   private scoreText?: Phaser.GameObjects.Text;
   private bannerText?: Phaser.GameObjects.Text;
@@ -93,24 +93,28 @@ export class DriftDogScene extends Phaser.Scene {
 
     const hudFont = "PingFang TC, Hiragino Sans GB, Noto Sans TC, sans-serif";
     const roomCode = new URLSearchParams(window.location.search).get("room") ?? "";
-    this.add.text(28, 24, roomCode ? `房間 ${roomCode}` : "", {
+    this.add.text(36, TOUCH.hudTop, roomCode ? `房間 ${roomCode}` : "", {
       fontFamily: hudFont,
-      fontSize: "16px",
+      fontSize: "28px",
       color: "#95d5b2",
     });
-    this.scoreText = this.add.text(ARENA.width / 2, 28, "", {
+    this.scoreText = this.add.text(ARENA.width / 2, TOUCH.hudTop, "", {
       fontFamily: hudFont,
-      fontSize: "22px",
+      fontSize: "32px",
       color: "#f95738",
+      align: "center",
+      wordWrap: { width: ARENA.width - 80 },
     }).setOrigin(0.5, 0);
-    this.bannerText = this.add.text(ARENA.width / 2, ARENA.height / 2 - 120, "", {
+    this.bannerText = this.add.text(ARENA.width / 2, ARENA.height / 2 - 160, "", {
       fontFamily: hudFont,
-      fontSize: "26px",
+      fontSize: "40px",
       color: "#fff3b0",
+      align: "center",
+      wordWrap: { width: ARENA.width - 80 },
     }).setOrigin(0.5);
-    this.shoutText = this.add.text(ARENA.width / 2, 120, "", {
+    this.shoutText = this.add.text(ARENA.width / 2, TOUCH.hudTop + 160, "", {
       fontFamily: hudFont,
-      fontSize: "42px",
+      fontSize: "48px",
       color: "#f95738",
     }).setOrigin(0.5).setAlpha(0);
     this.hitFlash = this.add.rectangle(ARENA.width / 2, ARENA.height / 2, ARENA.width, ARENA.height, 0xffffff, 0);
@@ -175,26 +179,19 @@ export class DriftDogScene extends Phaser.Scene {
   }
 
   private buildSticks(): void {
-    const moveHome = this.stickHome("move");
-    const aimHome = this.stickHome("aim");
-    this.moveBase = this.add.circle(moveHome.x, moveHome.y, STICK_MAX_RADIUS, 0xffffff, 0.08).setStrokeStyle(2, 0xffffff, 0.28).setDepth(20);
-    this.moveKnob = this.add.circle(moveHome.x, moveHome.y, 28, 0xf4d35e, 0.9).setStrokeStyle(2, 0x081c15).setDepth(21);
-    this.aimBase = this.add.circle(aimHome.x, aimHome.y, STICK_MAX_RADIUS, 0xffffff, 0.08).setStrokeStyle(2, 0xffffff, 0.28).setDepth(20);
-    this.aimKnob = this.add.circle(aimHome.x, aimHome.y, 28, 0xf95738, 0.9).setStrokeStyle(2, 0x081c15).setDepth(21);
+    const moveHome = stickHome("move");
+    const aimHome = stickHome("aim");
+    this.moveBase = this.add.circle(moveHome.x, moveHome.y, TOUCH.stickRadius, 0xffffff, 0.08).setStrokeStyle(3, 0xffffff, 0.28).setDepth(20);
+    this.moveKnob = this.add.circle(moveHome.x, moveHome.y, 40, 0xf4d35e, 0.9).setStrokeStyle(3, 0x081c15).setDepth(21);
+    this.aimBase = this.add.circle(aimHome.x, aimHome.y, TOUCH.stickRadius, 0xffffff, 0.08).setStrokeStyle(3, 0xffffff, 0.28).setDepth(20);
+    this.aimKnob = this.add.circle(aimHome.x, aimHome.y, 40, 0xf95738, 0.9).setStrokeStyle(3, 0x081c15).setDepth(21);
   }
 
   private buildChaseDog(): Phaser.GameObjects.Image {
     return this.add
-      .image(80, 720, CHASE_DOG.key)
+      .image(ARENA.width / 2, ARENA.height / 2, CHASE_DOG.key)
       .setDisplaySize(CHASE_DOG.displayWidth, CHASE_DOG.displayHeight)
       .setDepth(8);
-  }
-
-  private stickHome(side: "move" | "aim"): { x: number; y: number } {
-    return {
-      x: side === "move" ? 120 : ARENA.width - 120,
-      y: ARENA.height - 120,
-    };
   }
 
   private screenToWorld(point: { x: number; y: number } | null): { x: number; y: number } | null {
@@ -212,17 +209,17 @@ export class DriftDogScene extends Phaser.Scene {
   }
 
   private drawSticks(move: StickState, aim: StickState): void {
-    const moveOrigin = this.screenToWorld(this.pads?.moveOrigin) ?? this.stickHome("move");
-    const aimOrigin = this.screenToWorld(this.pads?.aimOrigin) ?? this.stickHome("aim");
+    const moveOrigin = this.screenToWorld(this.pads?.moveOrigin) ?? stickHome("move");
+    const aimOrigin = this.screenToWorld(this.pads?.aimOrigin) ?? stickHome("aim");
     this.moveBase?.setPosition(moveOrigin.x, moveOrigin.y).setAlpha(this.pads?.moveOrigin ? 0.35 : 0.18);
     this.aimBase?.setPosition(aimOrigin.x, aimOrigin.y).setAlpha(this.pads?.aimOrigin ? 0.35 : 0.18);
     this.moveKnob?.setPosition(
-      moveOrigin.x + move.x * STICK_MAX_RADIUS,
-      moveOrigin.y + move.y * STICK_MAX_RADIUS,
+      moveOrigin.x + move.x * TOUCH.stickRadius,
+      moveOrigin.y + move.y * TOUCH.stickRadius,
     );
     this.aimKnob?.setPosition(
-      aimOrigin.x + aim.x * STICK_MAX_RADIUS,
-      aimOrigin.y + aim.y * STICK_MAX_RADIUS,
+      aimOrigin.x + aim.x * TOUCH.stickRadius,
+      aimOrigin.y + aim.y * TOUCH.stickRadius,
     );
   }
 
@@ -378,7 +375,7 @@ export class DriftDogScene extends Phaser.Scene {
         id,
         this.add.text(player.x, player.y - 28, player.name, {
           fontFamily: "PingFang TC, Hiragino Sans GB, Noto Sans TC, sans-serif",
-          fontSize: "14px",
+          fontSize: "22px",
           color: "#f8f9fa",
         }).setOrigin(0.5, 1),
       );

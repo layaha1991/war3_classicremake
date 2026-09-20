@@ -6,6 +6,7 @@ export function mountLobby(root: HTMLElement, onJoin: (roomCode: string, nicknam
   const preset = params.get("room") ?? "";
   root.innerHTML = `
     <main class="shell">
+      <p class="rotate-hint">請直向拿手機</p>
       <section class="card">
         <p class="eyebrow">War3 Classic Remake</p>
         <h1>秋名山甩狗</h1>

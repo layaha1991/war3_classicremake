@@ -32,6 +32,10 @@ export function bootGame(parent: HTMLElement, room: Room, options: { onReturnLob
   const win = refs();
   win.__driftdogRoom = room;
   win.__driftdogPads = attachTouchPads(parent);
+  const rotate = document.createElement("p");
+  rotate.className = "rotate-hint";
+  rotate.textContent = "請直向拿手機";
+  parent.append(rotate);
   const game = new Phaser.Game({
     type: Phaser.CANVAS,
     parent,

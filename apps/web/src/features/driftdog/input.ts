@@ -1,7 +1,7 @@
 import type { PlayerInput } from "@war3/shared";
 
 export const STICK_DEADZONE = 0.12;
-export const STICK_MAX_RADIUS = 72;
+export const STICK_MAX_RADIUS = 110;
 
 export type StickSide = "move" | "aim";
 

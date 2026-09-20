@@ -4,7 +4,7 @@ export function formatHearts(hearts: number, max = 2): string {
 }
 
 export function formatRoster(players: { name: string; hearts: number }[]): string {
-  return players.map((player) => `${player.name} ${formatHearts(player.hearts)}`).join("    ");
+  return players.map((player) => `${player.name} ${formatHearts(player.hearts)}`).join("\n");
 }
 
 export function waitingCopy(phase: string): string {
