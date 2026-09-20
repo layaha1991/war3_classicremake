@@ -33,11 +33,11 @@ describe("driftdog simulation", () => {
     expect(PARAMS.dog.catchRange).toBe(214);
     expect(PARAMS.dog.turnRate).toBe(0.72);
     expect(PARAMS.dog.drift).toBe(0.42);
-    expect(PARAMS.player.blinkDistance).toBe(PARAMS.player.displayHeight * 5);
+    expect(PARAMS.player.blinkDistance).toBe(640);
     expect(PARAMS.player.blinkCooldown).toBe(7);
   });
 
-  it("blinks five body lengths along heading and then cools down", () => {
+  it("blinks along heading and then cools down", () => {
     let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 80, y: 400, heading: 0 });
     state.dog.stun = 99;
     const flashed = blink(state, "a");

@@ -16,8 +16,8 @@ export const PARAMS = {
     displayWidth: 192,
     /** Twice the original 96px size, kept square so the sprite is not stretched. */
     displayHeight: 192,
-    /** Five body lengths (uses the taller visual height). */
-    blinkDistance: 960,
+    /** About 3.3 body lengths after cutting the original flash by one third. */
+    blinkDistance: 640,
     blinkCooldown: 7,
   },
   ball: {
