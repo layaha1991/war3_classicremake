@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addPlayer, blink, createMatch, passBall, playerHitByRay, removePlayer, restartMatch, step } from "./sim.js";
+import { addPlayer, angleDelta, blink, createMatch, passBall, playerHitByRay, removePlayer, restartMatch, step } from "./sim.js";
 import { ARENA, DT, PARAMS, PLAYABLE_HEIGHT } from "./constants.js";
 
 function stick(moveX = 0, moveY = 0) {
@@ -28,9 +28,11 @@ describe("driftdog simulation", () => {
     expect(PARAMS.player.speed).toBe(440);
     expect(PARAMS.player.displayHeight).toBe(192);
     expect(PARAMS.player.displayWidth).toBe(192);
-    expect(PARAMS.dog.radius).toBe(168);
-    expect(PARAMS.dog.display).toBe(480);
-    expect(PARAMS.dog.catchRange).toBe(256);
+    expect(PARAMS.dog.radius).toBe(140);
+    expect(PARAMS.dog.display).toBe(400);
+    expect(PARAMS.dog.catchRange).toBe(214);
+    expect(PARAMS.dog.turnRate).toBe(0.72);
+    expect(PARAMS.dog.drift).toBe(0.42);
     expect(PARAMS.player.blinkDistance).toBe(PARAMS.player.displayHeight * 5);
     expect(PARAMS.player.blinkCooldown).toBe(7);
   });
@@ -126,6 +128,8 @@ describe("driftdog simulation", () => {
     expect(state.dog.speed).toBeGreaterThan(startSpeed);
     const moveHeading = Math.atan2(state.dog.vy, state.dog.vx);
     expect(Math.abs(moveHeading - state.dog.heading)).toBeGreaterThan(0.2);
+    const desired = Math.atan2(state.players.a.y - state.dog.y, state.players.a.x - state.dog.x);
+    expect(Math.abs(angleDelta(state.dog.heading, desired))).toBeGreaterThan(0.7);
   });
 
   it("only hits living players with the pass ray", () => {

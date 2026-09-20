@@ -28,7 +28,7 @@ export const PARAMS = {
     catchRange: 36,
   },
   dog: {
-    radius: 168,
+    radius: 140,
     startX: 540,
     startY: 768,
     /** Speed after spawn / after a tag reset. */
@@ -37,11 +37,11 @@ export const PARAMS = {
     accel: 180,
     maxSpeed: 280,
     /** Lower = wider drifting turns. */
-    turnRate: 1.05,
+    turnRate: 0.72,
     /** Lower = more slip. Velocity lags behind heading. */
-    drift: 0.7,
-    display: 480,
-    catchRange: 256,
+    drift: 0.42,
+    display: 400,
+    catchRange: 214,
     stun: 1.4,
   },
   lives: {

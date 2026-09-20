@@ -52,6 +52,6 @@ describe("2d sprite helpers", () => {
     expect(existsSync(resolve(publicDir, "driftdog/dog-walk.png"))).toBe(true);
     expect(SPRITES.playerDisplayWidth).toBe(192);
     expect(SPRITES.playerDisplayHeight).toBe(192);
-    expect(SPRITES.dogDisplay).toBe(480);
+    expect(SPRITES.dogDisplay).toBe(400);
   });
 });
