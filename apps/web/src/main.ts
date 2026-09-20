@@ -1,1 +1,18 @@
-document.querySelector("#app")?.setAttribute("data-ready", "1");
+import { mountLobby } from "./features/lobby/lobby-screen.js";
+import { joinShuagou } from "./features/shuagou/net.js";
+import { bootGame } from "./features/shell/boot-game.js";
+import "./features/shell/styles.css";
+
+const app = document.querySelector("#app");
+if (!app) {
+  throw new Error("#app missing");
+}
+
+mountLobby(app as HTMLElement, async (roomCode, nickname) => {
+  const room = await joinShuagou(roomCode, nickname);
+  app.innerHTML = "";
+  const gameRoot = document.createElement("div");
+  gameRoot.id = "game";
+  app.append(gameRoot);
+  bootGame(gameRoot, room);
+});

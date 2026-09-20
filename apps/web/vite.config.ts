@@ -7,4 +7,7 @@ export default defineConfig({
       "/api": "http://localhost:2567",
     },
   },
+  optimizeDeps: {
+    include: ["phaser", "@colyseus/sdk"],
+  },
 });
