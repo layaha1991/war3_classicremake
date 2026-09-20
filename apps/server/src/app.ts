@@ -28,7 +28,18 @@ export async function buildApp(options: {
     loggerInstance: options.logger,
   });
 
-  await app.register(helmet);
+  await app.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        connectSrc: ["'self'", "ws:", "wss:"],
+        imgSrc: ["'self'", "data:"],
+        styleSrc: ["'self'", "https:", "'unsafe-inline'"],
+        fontSrc: ["'self'", "https:", "data:"],
+      },
+    },
+  });
   await app.register(cookie);
   await app.register(cors, {
     origin: true,
@@ -59,6 +70,7 @@ export async function buildApp(options: {
     rooms: new RoomService(options.stores.rooms),
   });
   registerMatchmakeRoutes(app);
+  app.get("/favicon.ico", async (_request, reply) => reply.code(204).send());
 
   return app;
 }

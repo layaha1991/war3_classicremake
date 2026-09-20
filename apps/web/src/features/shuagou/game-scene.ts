@@ -142,6 +142,9 @@ export class ShuagouScene extends Phaser.Scene {
     this.drawSticks(move, aim);
     this.drawAimRay(local, aim);
 
+    if (!this.room.state?.ball) {
+      return;
+    }
     if (!local || this.room.state.phase !== "playing") {
       this.drawRemoteBodies();
       return;
@@ -271,8 +274,11 @@ export class ShuagouScene extends Phaser.Scene {
 
   private pullState(): void {
     const seen = new Set<string>();
-    const players = this.room.state.players as { forEach?: (cb: (player: RemotePlayer, id: string) => void) => void };
-    players.forEach?.((player, id) => {
+    const players = this.room.state?.players as { forEach?: (cb: (player: RemotePlayer, id: string) => void) => void } | undefined;
+    if (!players?.forEach) {
+      return;
+    }
+    players.forEach((player, id) => {
       seen.add(id);
       this.upsertDog(id, player);
     });
@@ -330,10 +336,14 @@ export class ShuagouScene extends Phaser.Scene {
       const from = this.previous.get(id) ?? player;
       this.drawPlayer(id, { ...player, ...interpolateEntity(from, player, 0.35) }, id === this.localId);
     }
+    const ball = this.room.state?.ball;
+    if (!ball) {
+      return;
+    }
     const ballTo = {
-      x: Number(this.room.state.ball.x),
-      y: Number(this.room.state.ball.y),
-      ownerId: String(this.room.state.ball.ownerId ?? ""),
+      x: Number(ball.x),
+      y: Number(ball.y),
+      ownerId: String(ball.ownerId ?? ""),
     };
     const ballFrom = this.previousBall;
     this.previousBall = this.currentBall;

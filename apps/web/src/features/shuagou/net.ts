@@ -4,11 +4,35 @@ export function colyseusUrl(): string {
   if (import.meta.env.VITE_COLYSEUS_URL) {
     return import.meta.env.VITE_COLYSEUS_URL;
   }
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const protocol = window.location.protocol === "https:" ? "https:" : "http:";
   if (window.location.port === "5173" || window.location.port === "4173") {
     return `${protocol}//${window.location.hostname}:2567`;
   }
   return `${protocol}//${window.location.host}`;
+}
+
+export function hasRoomState(state: unknown): boolean {
+  if (!state || typeof state !== "object") {
+    return false;
+  }
+  const room = state as { players?: unknown; ball?: unknown };
+  return room.players !== undefined && room.ball !== undefined;
+}
+
+export function waitForRoomState(
+  room: { state?: unknown; onStateChange: { once: (callback: () => void) => void } },
+  timeoutMs = 8000,
+): Promise<void> {
+  if (hasRoomState(room.state)) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("房間狀態逾時")), timeoutMs);
+    room.onStateChange.once(() => {
+      clearTimeout(timer);
+      resolve();
+    });
+  });
 }
 
 export function newRoomCode(): string {
@@ -18,5 +42,7 @@ export function newRoomCode(): string {
 
 export async function joinShuagou(roomCode: string, nickname: string): Promise<Room> {
   const client = new Client(colyseusUrl());
-  return client.joinOrCreate("shuagou", { roomCode, nickname });
+  const room = await client.joinOrCreate("shuagou", { roomCode, nickname });
+  await waitForRoomState(room);
+  return room;
 }
