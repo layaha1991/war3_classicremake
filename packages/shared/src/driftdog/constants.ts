@@ -16,8 +16,7 @@ export const PARAMS = {
     displayWidth: 192,
     /** Twice the original 96px size, kept square so the sprite is not stretched. */
     displayHeight: 192,
-    /** About 3.3 body lengths after cutting the original flash by one third. */
-    blinkDistance: 640,
+    blinkDistance: 300,
     blinkCooldown: 7,
   },
   ball: {
@@ -28,24 +27,27 @@ export const PARAMS = {
     catchRange: 36,
   },
   dog: {
-    radius: 140,
+    radius: 112,
     startX: 540,
     startY: 768,
     /** Speed after spawn / after a tag reset. */
-    initialSpeed: 30,
+    initialSpeed: 160,
     /** Speed added per second while chasing, up to maxSpeed. */
-    accel: 180,
-    maxSpeed: 420,
+    accel: 80,
+    maxSpeed: 2000,
     /** Lower = wider drifting turns. */
     turnRate: 0.72,
     /** Lower = more slip. Velocity lags behind heading. */
     drift: 0.84,
-    display: 400,
+    display: 320,
     catchRange: 214,
     stun: 1.4,
   },
   lives: {
     hearts: 2,
+  },
+  match: {
+    maxSeconds: 60,
   },
   ray: {
     hitWidth: 26,
@@ -77,3 +79,4 @@ export const RAY_MAX_DIST = PARAMS.ray.maxDist;
 export const STARTING_HEARTS = PARAMS.lives.hearts;
 export const BLINK_DISTANCE = PARAMS.player.blinkDistance;
 export const BLINK_COOLDOWN = PARAMS.player.blinkCooldown;
+export const MATCH_MAX_SECONDS = PARAMS.match.maxSeconds;

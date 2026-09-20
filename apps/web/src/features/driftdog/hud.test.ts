@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { endMatchTitle, formatHearts, formatRoster, waitingCopy, winnerNameFromRoster } from "./hud.js";
+import { endMatchTitle, formatHearts, formatMatchClock, formatRoster, waitingCopy, winnerNameFromRoster } from "./hud.js";
 
 describe("driftdog hud", () => {
   it("shows two hearts, then one red and one gray after a hit", () => {
@@ -14,6 +14,9 @@ describe("driftdog hud", () => {
 
   it("tells a lone player to wait and names the last survivor", () => {
     expect(waitingCopy("lobby")).toBe("等待第二位玩家…把網址傳給朋友");
+    expect(formatMatchClock(0, 60)).toBe("60s");
+    expect(formatMatchClock(59.2, 60)).toBe("1s");
+    expect(formatMatchClock(60, 60)).toBe("0s");
     expect(waitingCopy("playing")).toBe("");
     expect(waitingCopy("ended")).toBe("");
     expect(endMatchTitle("拓海")).toBe("拓海 贏了！");
