@@ -14,6 +14,7 @@
     "@fastify/cookie": "^11.1.2",
     "@fastify/cors": "^11.3.0",
     "@fastify/helmet": "^13.1.1",
+    "@fastify/static": "^10.1.4",
     "@war3/protocol": "workspace:*",
     "@war3/shared": "workspace:*",
     "colyseus": "^0.18.6",

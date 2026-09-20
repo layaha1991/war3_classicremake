@@ -1,12 +1,12 @@
 import {
   ARENA,
   addPlayer,
-  blink,
   createMatch,
   DT,
+  passBall,
+  playerHitByRay,
   removePlayer,
   step,
-  throwBall,
   type MatchState,
   type PlayerInput,
   type SimEvent,
@@ -56,12 +56,16 @@ export class ShuagouRuntime {
     this.inputs[playerId] = sanitizeInput(raw);
   }
 
-  handleThrow(playerId: string): void {
-    this.apply(throwBall(this.sim, playerId));
-  }
-
-  handleBlink(playerId: string): void {
-    this.apply(blink(this.sim, playerId));
+  handlePass(playerId: string, heading: number): void {
+    const player = this.sim.players[playerId];
+    if (!player) {
+      return;
+    }
+    const targetId = playerHitByRay(player, heading, Object.values(this.sim.players), playerId);
+    if (!targetId) {
+      return;
+    }
+    this.apply(passBall(this.sim, playerId, targetId));
   }
 
   tick(): SimEvent[] {

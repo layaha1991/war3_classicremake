@@ -31,7 +31,7 @@ export async function buildApp(options: {
   await app.register(helmet);
   await app.register(cookie);
   await app.register(cors, {
-    origin: options.config.publicWebOrigin,
+    origin: true,
     credentials: true,
   });
 

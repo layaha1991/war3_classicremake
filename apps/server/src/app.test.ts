@@ -121,6 +121,13 @@ describe("guest lobby API", () => {
     expect(lookedUp.json()).not.toHaveProperty("ownerId");
   });
 
+  it("lists live rooms without a guest cookie", async () => {
+    app = await createGuestApp();
+    const response = await app.inject({ method: "GET", url: "/api/rooms" });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ rooms: [] });
+  });
+
   it("does not leak other rooms when the code is unknown", async () => {
     app = await createGuestApp();
     const response = await app.inject({ method: "GET", url: "/api/rooms/ZZZZZZ" });

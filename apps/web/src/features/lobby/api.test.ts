@@ -35,4 +35,17 @@ describe("lobby api", () => {
       playerCount: 0,
     });
   });
+
+  it("lists live rooms without a guest cookie", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ rooms: [{ roomCode: "ABC123", playerCount: 2 }] }),
+    });
+    const api = createLobbyApi(fetchMock as unknown as typeof fetch);
+    await expect(api.listRooms()).resolves.toEqual({
+      rooms: [{ roomCode: "ABC123", playerCount: 2 }],
+    });
+    expect(fetchMock).toHaveBeenCalledWith("/api/rooms", expect.objectContaining({ credentials: "include" }));
+  });
 });

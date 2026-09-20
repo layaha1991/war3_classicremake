@@ -5,7 +5,8 @@
   "scripts": {
     "test": "pnpm -r --if-present test",
     "build": "pnpm -r --if-present build",
-    "dev": "pnpm --parallel --filter @war3/server --filter @war3/web dev"
+    "dev": "pnpm --parallel --filter @war3/server --filter @war3/web dev",
+    "start:public": "pnpm --filter @war3/web build && pnpm --filter @war3/server start"
   },
   "engines": {
     "node": ">=20"

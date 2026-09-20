@@ -2,7 +2,13 @@
 
 瀏覽器重製三張魔獸地圖。第一版只做《秋名山甩狗》，讓朋友開網址就能玩。
 
-## 本機
+## Colyseus 能不能像 Photon 一樣走公網？
+
+可以。Colyseus 跟 Photon 一樣是 **WebSocket**（HTTPS 頁面會自動用 `wss://`），不是區網廣播。朋友在不同地方只要連同一個公開網址即可，不需要 LAN。
+
+不用資料庫：房間列表來自 Colyseus 記憶體裡的 `matchMaker.query`，重開伺服器房間會清空。
+
+## 本機開發
 
 ```bash
 cp .env.example .env
@@ -14,9 +20,23 @@ pnpm dev
 - Web：http://localhost:5173
 - API / Colyseus：http://localhost:2567
 
-開房後把帶 `?room=房間碼` 的網址傳給朋友。兩人進房才開打。
+大廳可「建立房間」或從列表加入。左擳桿移動，右擳桿瞄光線，放開打中人就傳球。球永遠貼人，狗會漂移追持球者。
 
-操作：WASD 移動、滑鼠瞄準、J / 右鍵丟球、空白鍵閃爍。
+## 給遠端朋友（一個公開網址）
+
+先建前端再讓 Fastify 跟 Colyseus 同 port 提供網頁：
+
+```bash
+pnpm start:public
+```
+
+然後把 `2567` 打到公網，例如：
+
+```bash
+npx cloudflared tunnel --url http://localhost:2567
+```
+
+把 `https://….trycloudflare.com` 傳給朋友。頁面跟 WebSocket 走同一個 host，不用再開第二條 tunnel。
 
 ## Docker
 
@@ -30,6 +50,5 @@ Rollback：改回上一版 image 再 `docker compose up -d`。
 ## 架構備註
 
 - 模組化單體：Fastify + Colyseus 同一 process。
-- Session 放 Redis，帳號／房間索引放 Postgres。
-- 對戰 tick 留在 Colyseus room memory（延遲需求，不能每幀走 Redis）。
-- Token 只走 httpOnly cookie。
+- 對戰 tick 與房間列表都在 process memory（不用 DB）。
+- 可選 Redis / Postgres：設 `STORE_DRIVER=persist`。

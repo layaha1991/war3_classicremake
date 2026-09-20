@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import fastifyStatic from "@fastify/static";
 import { Redis } from "ioredis";
 import { Pool } from "pg";
 import { buildApp } from "./app.js";
@@ -38,6 +41,12 @@ const app = await buildApp({
   logger,
   stores: await createStores(),
 });
+
+const webRoot = fileURLToPath(new URL("../../web/dist", import.meta.url));
+if (existsSync(webRoot)) {
+  await app.register(fastifyStatic, { root: webRoot });
+  logger.info({ event: "web.static", webRoot }, "serving web on the same port as Colyseus");
+}
 
 await app.ready();
 const { attachGameServer } = await import("./game-server.js");

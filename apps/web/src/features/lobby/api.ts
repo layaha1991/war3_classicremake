@@ -36,5 +36,8 @@ export function createLobbyApi(fetchImpl: typeof fetch = fetch) {
     getRoom(code: string) {
       return request<RoomSummary>(`/api/rooms/${code}`);
     },
+    listRooms() {
+      return request<{ rooms: { roomCode: string; playerCount: number }[] }>("/api/rooms");
+    },
   };
 }

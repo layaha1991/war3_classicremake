@@ -5,6 +5,22 @@ import type { FastifyInstance } from "fastify";
 import { ShuagouRoom } from "./modules/shuagou/shuagou-room.js";
 
 export function registerMatchmakeRoutes(app: FastifyInstance): void {
+  app.get("/api/rooms", async () => {
+    try {
+      const rooms = await matchMaker.query({ name: "shuagou" });
+      return {
+        rooms: rooms.map((room) => ({
+          roomCode: String((room.metadata as { roomCode?: string } | undefined)?.roomCode ?? room.roomId)
+            .slice(0, 6)
+            .toUpperCase(),
+          playerCount: room.clients,
+        })),
+      };
+    } catch {
+      return { rooms: [] };
+    }
+  });
+
   app.post("/matchmake/:method/:roomName", async (request, reply) => {
     const { method, roomName } = request.params as { method: string; roomName: string };
     try {

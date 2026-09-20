@@ -83,6 +83,40 @@ button:disabled {
   opacity: 0.6;
 }
 
+button.ghost {
+  background: transparent;
+  color: #d8f3dc;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.rooms {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.rooms li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #2d6a4f;
+  border-radius: 8px;
+}
+
+.rooms .empty {
+  border: none;
+  color: #95d5b2;
+}
+
 .error {
   color: #f95738;
   margin: 0;
