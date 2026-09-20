@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { Room } from "@colyseus/sdk";
 import { ARENA, DT, PARAMS, PLAYABLE_HEIGHT, RAY_MAX_DIST, playerHitByRay, type SimEvent } from "@war3/shared";
-import { formatMatchClock, formatRoster, waitingCopy } from "./hud.js";
+import { formatRoster, waitingCopy } from "./hud.js";
 import { interpolateEntity } from "./interpolate.js";
 import { stickHome, TOUCH } from "./layout.js";
 import { SPRITES, facingFromMotion, isMoving, ripplePulse, shouldFlipX, spriteFrameIndex } from "./sprites.js";
@@ -396,9 +396,7 @@ export class DriftDogScene extends Phaser.Scene {
     const players = [...this.current.values()];
     this.scoreText?.setText(formatRoster(players));
     const phase = String(this.room.state.phase ?? "lobby");
-    if (phase === "playing") {
-      this.bannerText?.setText(formatMatchClock(Number(this.room.state.timer ?? 0), PARAMS.match.maxSeconds));
-    } else if (phase !== "ended") {
+    if (phase !== "ended") {
       this.bannerText?.setText(waitingCopy(phase));
     }
   }

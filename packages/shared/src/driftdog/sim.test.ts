@@ -38,7 +38,7 @@ describe("driftdog simulation", () => {
     expect(PARAMS.dog.maxSpeed).toBeGreaterThanOrEqual(2000);
     expect(PARAMS.player.blinkDistance).toBe(300);
     expect(PARAMS.player.blinkCooldown).toBe(7);
-    expect(PARAMS.match.maxSeconds).toBe(60);
+    expect(PARAMS.match).toBeUndefined();
   });
 
   it("blinks along heading and then cools down", () => {
@@ -236,13 +236,13 @@ describe("driftdog simulation", () => {
     expect(state.players.b.hasBall).toBe(true);
   });
 
-  it("ends the match when the one-minute limit is reached", () => {
+  it("does not end a match just because a minute has passed", () => {
     let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 200, y: 200 });
     state = addPlayer(state, "b", { x: 900, y: 1200 });
     state.dog.stun = 99;
-    state.timer = PARAMS.match.maxSeconds - DT;
+    state.timer = 60;
     const after = run(state, 2, { a: stick(), b: stick() });
-    expect(after.state.phase).toBe("ended");
-    expect(after.events.some((event) => event.type === "win")).toBe(true);
+    expect(after.state.phase).toBe("playing");
+    expect(after.events.some((event) => event.type === "win")).toBe(false);
   });
 });

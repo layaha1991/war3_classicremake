@@ -15,7 +15,6 @@ import {
   DOG_STUN,
   DOG_TURN_RATE,
   DT,
-  MATCH_MAX_SECONDS,
   PLAYER_RADIUS,
   PLAYER_SPEED,
   PLAYABLE_HEIGHT,
@@ -470,16 +469,6 @@ export function step(state: MatchState, inputs: Record<string, PlayerInput>, dt:
   stepDog(next, events, dt);
   stickBall(next);
   next.timer += dt;
-  if (next.phase === "playing" && next.timer >= MATCH_MAX_SECONDS) {
-    next.phase = "ended";
-    const alive = livingPlayers(next);
-    const best = Math.max(0, ...alive.map((player) => player.hearts));
-    const tied = alive.filter((player) => player.hearts === best);
-    const winner = tied.find((player) => player.id === next.ball.ownerId) ?? tied[0];
-    if (winner) {
-      events.push({ type: "win", playerId: winner.id });
-    }
-  }
 
   return { state: next, events };
 }

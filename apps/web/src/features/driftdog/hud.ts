@@ -7,10 +7,6 @@ export function formatRoster(players: { name: string; hearts: number }[]): strin
   return players.map((player) => `${player.name} ${formatHearts(player.hearts)}`).join("\n");
 }
 
-export function formatMatchClock(elapsed: number, maxSeconds = 60): string {
-  return `${Math.max(0, Math.ceil(maxSeconds - elapsed))}s`;
-}
-
 export function waitingCopy(phase: string): string {
   if (phase === "lobby") {
     return "等待第二位玩家…把網址傳給朋友";

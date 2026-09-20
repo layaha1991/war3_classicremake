@@ -46,9 +46,6 @@ export const PARAMS = {
   lives: {
     hearts: 2,
   },
-  match: {
-    maxSeconds: 60,
-  },
   ray: {
     hitWidth: 26,
     maxDist: 2200,
@@ -79,4 +76,3 @@ export const RAY_MAX_DIST = PARAMS.ray.maxDist;
 export const STARTING_HEARTS = PARAMS.lives.hearts;
 export const BLINK_DISTANCE = PARAMS.player.blinkDistance;
 export const BLINK_COOLDOWN = PARAMS.player.blinkCooldown;
-export const MATCH_MAX_SECONDS = PARAMS.match.maxSeconds;
