@@ -9,7 +9,7 @@ export function formatRoster(players: { name: string; hearts: number }[]): strin
 
 export function waitingCopy(phase: string): string {
   if (phase === "lobby") {
-    return "等待第二位玩家…把網址傳給朋友";
+    return "等待第二位玩家…或按加 Bot 代玩";
   }
   return "";
 }

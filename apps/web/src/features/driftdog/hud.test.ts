@@ -13,7 +13,7 @@ describe("driftdog hud", () => {
   });
 
   it("tells a lone player to wait and names the last survivor", () => {
-    expect(waitingCopy("lobby")).toBe("等待第二位玩家…把網址傳給朋友");
+    expect(waitingCopy("lobby")).toBe("等待第二位玩家…或按加 Bot 代玩");
     expect(waitingCopy("playing")).toBe("");
     expect(waitingCopy("ended")).toBe("");
     expect(endMatchTitle("拓海")).toBe("拓海 贏了！");

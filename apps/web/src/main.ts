@@ -22,9 +22,9 @@ function showLobby(): void {
   }
 }
 
-async function enterRoom(roomCode: string, nickname: string): Promise<void> {
+async function enterRoom(roomCode: string, nickname: string, options: { fillBots?: boolean } = {}): Promise<void> {
   lastNickname = nickname;
-  const room = await joinDriftDog(roomCode, nickname);
+  const room = await joinDriftDog(roomCode, nickname, options);
   root.replaceChildren();
   const gameRoot = document.createElement("div");
   gameRoot.id = "game";

@@ -37,10 +37,17 @@ export class DriftDogRoom extends Room<DriftDogState> {
       this.runtime.handleBlink(client.sessionId);
       this.sync();
     });
+    this.onMessage("addBot", () => {
+      this.runtime.addDummy();
+      this.sync();
+    });
   }
 
-  onJoin(client: Client, options: { nickname?: unknown } = {}): void {
+  onJoin(client: Client, options: { nickname?: unknown; fillBots?: unknown } = {}): void {
     this.runtime.join(client.sessionId, sanitizeNickname(options.nickname));
+    if (this.clients.length === 1 && options.fillBots !== false) {
+      this.runtime.fillDummies();
+    }
     this.sync();
   }
 

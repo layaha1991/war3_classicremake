@@ -1,7 +1,10 @@
 import { createLobbyApi } from "./api.js";
 import { newRoomCode } from "../driftdog/net.js";
 
-export function mountLobby(root: HTMLElement, onJoin: (roomCode: string, nickname: string) => Promise<void>): void {
+export function mountLobby(
+  root: HTMLElement,
+  onJoin: (roomCode: string, nickname: string, options?: { fillBots?: boolean }) => Promise<void>,
+): void {
   const params = new URLSearchParams(window.location.search);
   const preset = params.get("room") ?? "";
   root.innerHTML = `
@@ -12,6 +15,7 @@ export function mountLobby(root: HTMLElement, onJoin: (roomCode: string, nicknam
         <h1>秋名山甩狗</h1>
         <p class="lede">Colyseus 跟 Photon 一樣走 WebSocket，朋友不在區網也能連。建立房間或從列表加入。</p>
         <label>暱稱 <input id="nickname" maxlength="16" placeholder="拓海" /></label>
+        <label class="check"><input id="fill-bots" type="checkbox" checked /> 加 Bot 代玩（單人自動補夠開局）</label>
         <div class="actions">
           <button id="host" type="button">建立房間</button>
           <button id="refresh" type="button" class="ghost">刷新列表</button>
@@ -27,9 +31,11 @@ export function mountLobby(root: HTMLElement, onJoin: (roomCode: string, nicknam
   const error = root.querySelector("#error") as HTMLElement;
   const list = root.querySelector("#rooms") as HTMLUListElement;
   const nicknameInput = root.querySelector("#nickname") as HTMLInputElement;
+  const fillBotsInput = root.querySelector("#fill-bots") as HTMLInputElement;
   const hostButton = root.querySelector("#host") as HTMLButtonElement;
 
   const nickname = () => nicknameInput.value.trim();
+  const fillBots = () => fillBotsInput.checked;
 
   const fail = (err: unknown, button?: HTMLButtonElement) => {
     error.hidden = false;
@@ -51,7 +57,7 @@ export function mountLobby(root: HTMLElement, onJoin: (roomCode: string, nicknam
       const url = new URL(window.location.href);
       url.searchParams.set("room", roomCode);
       window.history.replaceState({}, "", url);
-      await onJoin(roomCode, nickname());
+      await onJoin(roomCode, nickname(), { fillBots: fillBots() });
     } catch (err) {
       fail(err, button);
     }

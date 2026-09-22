@@ -40,9 +40,17 @@ export function newRoomCode(): string {
   return Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
 }
 
-export async function joinDriftDog(roomCode: string, nickname: string): Promise<Room> {
+export async function joinDriftDog(
+  roomCode: string,
+  nickname: string,
+  options: { fillBots?: boolean } = {},
+): Promise<Room> {
   const client = new Client(colyseusUrl());
-  const room = await client.joinOrCreate("driftdog", { roomCode, nickname });
+  const room = await client.joinOrCreate("driftdog", {
+    roomCode,
+    nickname,
+    fillBots: options.fillBots !== false,
+  });
   await waitForRoomState(room);
   return room;
 }

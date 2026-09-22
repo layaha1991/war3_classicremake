@@ -36,6 +36,14 @@ export function bootGame(parent: HTMLElement, room: Room, options: { onReturnLob
   rotate.className = "rotate-hint";
   rotate.textContent = "請直向拿手機";
   parent.append(rotate);
+  const addBot = document.createElement("button");
+  addBot.type = "button";
+  addBot.className = "ghost add-bot";
+  addBot.textContent = "加 Bot";
+  addBot.addEventListener("click", () => {
+    room.send("addBot");
+  });
+  parent.append(addBot);
   const game = new Phaser.Game({
     type: Phaser.CANVAS,
     parent,
