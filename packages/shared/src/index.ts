@@ -16,6 +16,8 @@ export {
   STARTING_HEARTS,
   TICK_RATE,
 } from "./driftdog/constants.js";
+export { dummyInput, dummyPassHeading, dummyShouldBlink } from "./driftdog/dummy.js";
+export { dogInCorner, isPlaytestBroken, runPlaytest } from "./driftdog/playtest.js";
 export {
   addPlayer,
   blink,
