@@ -72,6 +72,49 @@ function clampEntity(x: number, y: number, radius: number): { x: number; y: numb
   };
 }
 
+function wallHits(x: number, y: number, radius: number): { hitX: boolean; hitY: boolean } {
+  return {
+    hitX: x <= radius || x >= ARENA.width - radius,
+    hitY: y <= radius || y >= PLAYABLE_HEIGHT - radius,
+  };
+}
+
+function bounceHeading(heading: number, hitX: boolean, hitY: boolean): number {
+  let hx = Math.cos(heading);
+  let hy = Math.sin(heading);
+  if (hitX) {
+    hx = -hx;
+  }
+  if (hitY) {
+    hy = -hy;
+  }
+  return Math.atan2(hy, hx);
+}
+
+function moveWithBounce(
+  entity: { x: number; y: number; vx: number; vy: number; heading: number },
+  dt: number,
+  radius: number,
+): { hitX: boolean; hitY: boolean } {
+  const nx = entity.x + entity.vx * dt;
+  const ny = entity.y + entity.vy * dt;
+  const hitX = nx < radius || nx > ARENA.width - radius;
+  const hitY = ny < radius || ny > PLAYABLE_HEIGHT - radius;
+  const next = clampEntity(nx, ny, radius);
+  entity.x = next.x;
+  entity.y = next.y;
+  if (hitX) {
+    entity.vx = -entity.vx;
+  }
+  if (hitY) {
+    entity.vy = -entity.vy;
+  }
+  if (hitX || hitY) {
+    entity.heading = bounceHeading(entity.heading, hitX, hitY);
+  }
+  return { hitX, hitY };
+}
+
 function livingPlayers(state: MatchState): PlayerState[] {
   return Object.values(state.players).filter((player) => player.alive);
 }
@@ -106,6 +149,7 @@ function resetDog(dog: DogState): void {
   dog.heading = 0;
   dog.speed = DOG_INITIAL_SPEED;
   dog.stun = DOG_STUN;
+  dog.cornerStuck = 0;
 }
 
 export function createMatch(options: CreateMatchOptions = {}): MatchState {
@@ -294,9 +338,7 @@ function steer(
   const blend = 1 - Math.exp(-drift * dt);
   entity.vx += (targetVx - entity.vx) * blend;
   entity.vy += (targetVy - entity.vy) * blend;
-  const next = clampEntity(entity.x + entity.vx * dt, entity.y + entity.vy * dt, radius);
-  entity.x = next.x;
-  entity.y = next.y;
+  moveWithBounce(entity, dt, radius);
 }
 
 function movePlayer(player: PlayerState, input: PlayerInput, dt: number): void {
@@ -408,17 +450,36 @@ function stepDog(state: MatchState, events: SimEvent[], dt: number): void {
   if (dog.stun > 0) {
     dog.vx *= 0.9;
     dog.vy *= 0.9;
-    const next = clampEntity(dog.x + dog.vx * dt, dog.y + dog.vy * dt, DOG_RADIUS);
-    dog.x = next.x;
-    dog.y = next.y;
+    moveWithBounce(dog, dt, DOG_RADIUS);
     return;
   }
   dog.speed = Math.min(DOG_MAX_SPEED, dog.speed + DOG_ACCEL * dt);
   const range = dogCatchRange();
   const from = { x: dog.x, y: dog.y };
   const dist = Math.hypot(target.x - dog.x, target.y - dog.y);
-  const turnRate = dist < range * 2 ? Math.max(DOG_TURN_RATE, 6) : DOG_TURN_RATE;
-  steer(dog, { x: target.x - dog.x, y: target.y - dog.y }, dog.speed, turnRate, DOG_DRIFT, dt, DOG_RADIUS);
+  const hits = wallHits(dog.x, dog.y, DOG_RADIUS + 80);
+  const inCorner = hits.hitX && hits.hitY;
+  const nearWall = hits.hitX || hits.hitY;
+  let speed = dog.speed;
+  let turnRate = dist < range * 2 ? Math.max(DOG_TURN_RATE, 6) : DOG_TURN_RATE;
+  if (inCorner) {
+    dog.cornerStuck = (dog.cornerStuck ?? 0) + 1;
+    speed = Math.min(speed, 360);
+    turnRate = Math.max(turnRate, 10);
+    if (dog.cornerStuck >= 8) {
+      dog.heading = Math.atan2(target.y - dog.y, target.x - dog.x);
+      dog.vx = Math.cos(dog.heading) * speed;
+      dog.vy = Math.sin(dog.heading) * speed;
+      dog.cornerStuck = 0;
+    }
+  } else {
+    dog.cornerStuck = 0;
+    if (nearWall) {
+      speed = Math.min(speed, 720);
+      turnRate = Math.max(turnRate, 5);
+    }
+  }
+  steer(dog, { x: target.x - dog.x, y: target.y - dog.y }, speed, turnRate, DOG_DRIFT, dt, DOG_RADIUS);
   if (state.ball.flightToId || state.ball.ownerId !== target.id) {
     return;
   }

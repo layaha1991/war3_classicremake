@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { addPlayer, createMatch } from "./sim.js";
-import { ARENA, DOG_RADIUS, PARAMS, PLAYABLE_HEIGHT } from "./constants.js";
+import { addPlayer, createMatch, step } from "./sim.js";
+import { ARENA, DOG_RADIUS, DT, PARAMS, PLAYABLE_HEIGHT } from "./constants.js";
 import { dummyInput, dummyShouldBlink } from "./dummy.js";
 import { dogInCorner, isPlaytestBroken, runPlaytest } from "./playtest.js";
 
@@ -54,5 +54,43 @@ describe("dummy playtest harness", () => {
     expect(report.tags).toBeGreaterThanOrEqual(0);
     expect(report.avgDistToHolder).toBeGreaterThan(0);
     expect(["timeout", "ended"]).toContain(report.reason);
+  });
+
+  it("leaves a corner after a high-speed wall slam and can tag a still holder", () => {
+    let state = addPlayer(createMatch({ phase: "playing" }), "a", { x: 540, y: 768 });
+    state = addPlayer(state, "b", { x: 900, y: 1200 });
+    state.dog.x = 280;
+    state.dog.y = DOG_RADIUS;
+    state.dog.heading = Math.PI;
+    state.dog.vx = -PARAMS.dog.maxSpeed;
+    state.dog.vy = -200;
+    state.dog.speed = PARAMS.dog.maxSpeed;
+    state.dog.stun = 0;
+    const idle = { up: false, down: false, left: false, right: false };
+    let seenCorner = false;
+    let leftCorner = false;
+    let tagged = false;
+    for (let i = 0; i < Math.round(8 / DT); i += 1) {
+      const result = step(state, { a: idle, b: idle }, DT);
+      state = result.state;
+      if (dogInCorner(state.dog)) {
+        seenCorner = true;
+      } else if (seenCorner) {
+        leftCorner = true;
+      }
+      if (result.events.some((event) => event.type === "tagged" && event.victimId === "a")) {
+        tagged = true;
+        break;
+      }
+    }
+    expect(seenCorner).toBe(true);
+    expect(leftCorner).toBe(true);
+    expect(tagged).toBe(true);
+  });
+
+  it("keeps dummy matches playable instead of camping the four corners", () => {
+    const report = runPlaytest(20);
+    expect(isPlaytestBroken(report)).toBe(false);
+    expect(report.cornerTime).toBeLessThanOrEqual(0.15);
   });
 });

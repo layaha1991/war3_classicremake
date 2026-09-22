@@ -44,6 +44,8 @@ export interface DogState {
   heading: number;
   speed: number;
   stun: number;
+  /** Consecutive frames the dog stayed in a corner. */
+  cornerStuck?: number;
 }
 
 export type MatchPhase = "lobby" | "playing" | "ended";
