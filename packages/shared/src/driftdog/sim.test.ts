@@ -24,7 +24,7 @@ describe("driftdog simulation", () => {
     expect(PLAYABLE_HEIGHT).toBe(1536);
     expect(PARAMS.dog.startX).toBe(ARENA.width / 2);
     expect(PARAMS.dog.startY).toBe(PLAYABLE_HEIGHT / 2);
-    expect(PARAMS.player.radius).toBe(22);
+    expect(PARAMS.player.radius).toBe(16);
     expect(PARAMS.player.speed).toBe(440);
     expect(PARAMS.player.displayHeight).toBe(154);
     expect(PARAMS.player.displayWidth).toBe(154);

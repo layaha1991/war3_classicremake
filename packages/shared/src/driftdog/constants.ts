@@ -12,7 +12,7 @@ export const PARAMS = {
   player: {
     /** Instant analog speed at stick rim. Players have no drift. */
     speed: 440,
-    radius: 22,
+    radius: 16,
     displayWidth: 154,
     displayHeight: 154,
     blinkDistance: 300,
