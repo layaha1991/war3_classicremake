@@ -125,11 +125,11 @@ export class DriftDogScene extends Phaser.Scene {
 
     const hudFont = "PingFang TC, Hiragino Sans GB, Noto Sans TC, sans-serif";
     const roomCode = new URLSearchParams(window.location.search).get("room") ?? "";
-    this.add.text(36, TOUCH.hudTop, roomCode ? `房間 ${roomCode}` : "", {
+    this.add.text(ARENA.width / 2, TOUCH.hudTop, roomCode ? `房間 ${roomCode}` : "", {
       fontFamily: hudFont,
       fontSize: "28px",
       color: "#95d5b2",
-    });
+    }).setOrigin(0.5, 0);
     this.scoreText = this.add.text(ARENA.width / 2, TOUCH.hudTop, "", {
       fontFamily: hudFont,
       fontSize: "32px",

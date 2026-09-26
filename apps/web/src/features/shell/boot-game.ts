@@ -32,10 +32,24 @@ export function bootGame(parent: HTMLElement, room: Room, options: { onReturnLob
   const win = refs();
   win.__driftdogRoom = room;
   win.__driftdogPads = attachTouchPads(parent);
+
+  const returnToLobby = (): void => {
+    void room.leave();
+    teardownGame();
+    options.onReturnLobby();
+  };
+
   const rotate = document.createElement("p");
   rotate.className = "rotate-hint";
   rotate.textContent = "請直向拿手機";
   parent.append(rotate);
+  const back = document.createElement("button");
+  back.type = "button";
+  back.className = "ghost game-back";
+  back.textContent = "← 返回";
+  back.setAttribute("aria-label", "返回大廳");
+  back.addEventListener("click", returnToLobby);
+  parent.append(back);
   const addBot = document.createElement("button");
   addBot.type = "button";
   addBot.className = "ghost add-bot";
@@ -63,11 +77,7 @@ export function bootGame(parent: HTMLElement, room: Room, options: { onReturnLob
   win.__driftdogGame = game;
   wireEndOverlay(parent, room, {
     onRematch: () => room.send("rematch"),
-    onLobby: () => {
-      void room.leave();
-      teardownGame();
-      options.onReturnLobby();
-    },
+    onLobby: returnToLobby,
   });
   return game;
 }

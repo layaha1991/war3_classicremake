@@ -171,6 +171,15 @@ button.ghost {
   touch-action: none;
 }
 
+.game-back {
+  position: absolute;
+  top: max(12px, var(--safe-top));
+  left: max(12px, var(--safe-left));
+  z-index: 30;
+  min-width: 88px;
+  padding-inline: 14px;
+}
+
 .add-bot {
   position: absolute;
   top: max(12px, var(--safe-top));

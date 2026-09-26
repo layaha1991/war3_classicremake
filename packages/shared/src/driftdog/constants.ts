@@ -22,7 +22,7 @@ export const PARAMS = {
     radius: 16,
     carryOffset: 64,
     /** Pixels per second while a pass is in the air. Higher = quicker flight. */
-    flySpeed: 480,
+    flySpeed: 600,
     catchRange: 36,
   },
   dog: {
@@ -32,12 +32,12 @@ export const PARAMS = {
     /** Speed after spawn / after a tag reset. */
     initialSpeed: 160,
     /** Speed added per second while chasing, up to maxSpeed. */
-    accel: 80,
+    accel: 20,
     maxSpeed: 2000,
     /** Lower = wider drifting turns. */
-    turnRate: 0.25,
+    turnRate: 0.4,
     /** Lower = more slip. Velocity lags behind heading. */
-    drift: 0.25,
+    drift: 0.4,
     display: 256,
     catchRange: 171,
     stun: 1.4,
