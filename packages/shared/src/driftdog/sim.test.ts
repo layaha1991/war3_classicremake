@@ -33,10 +33,11 @@ describe("driftdog simulation", () => {
     expect(PARAMS.dog.catchRange).toBe(171);
     expect(PARAMS.dog.turnRate).toBeGreaterThan(0.2);
     expect(PARAMS.dog.drift).toBeGreaterThan(0.2);
-    expect(PARAMS.dog.turnRate).toBe(0.25);
-    expect(PARAMS.dog.drift).toBe(0.25);
+    expect(PARAMS.dog.turnRate).toBe(0.4);
+    expect(PARAMS.dog.drift).toBe(0.4);
     expect(PARAMS.dog.initialSpeed).toBe(160);
-    expect(PARAMS.dog.accel).toBeGreaterThan(20);
+    expect(PARAMS.dog.accel).toBe(20);
+    expect(PARAMS.ball.flySpeed).toBe(600);
     expect(PARAMS.dog.maxSpeed).toBeGreaterThanOrEqual(2000);
     expect(PARAMS.player.blinkDistance).toBe(300);
     expect(PARAMS.player.blinkCooldown).toBe(7);
