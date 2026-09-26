@@ -46,7 +46,7 @@ npx cloudflared tunnel --url http://localhost:2567
    **唔好設** `STORE_DRIVER` → 房間／訪客用記憶體（重啟會清，夠朋友局）。
 
 5. **Deploy**：repo 根目錄已有 `railway.toml`  
-   - Build：`pnpm install --frozen-lockfile && pnpm build:deploy`  
+   - Build：`pnpm install --frozen-lockfile --prod=false && pnpm build:deploy`（build 階段要裝 devDependencies 才有 `vite`）  
    - Start：`pnpm --filter @war3/server start`  
    - Health：`GET /api/rooms`
 

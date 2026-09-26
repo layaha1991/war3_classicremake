@@ -1,6 +1,7 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "pnpm install --frozen-lockfile && pnpm build:deploy"
+# Railway sets NODE_ENV=production during build; without --prod=false pnpm skips vite (devDependency).
+buildCommand = "pnpm install --frozen-lockfile --prod=false && pnpm build:deploy"
 
 [deploy]
 startCommand = "pnpm --filter @war3/server start"
