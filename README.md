@@ -52,6 +52,12 @@ npx cloudflared tunnel --url http://localhost:2567
 
 6. 用 Railway 域名開玩；朋友用同一網址加入房間（`?room=房碼`）。
 
+### 502 / Bad Gateway
+
+1. **Deploy Logs** 搜 `JWT_SECRET`：production 一定要設，唔好用 `.env.example` 預設值。
+2. 確認 **Variables** 有 `NODE_ENV=production`、`JWT_SECRET`、`PUBLIC_WEB_ORIGIN=https://你的域名.up.railway.app`。
+3. 成功時 log 應有 `server.listen` 同 `web.static`（有 build 到 `apps/web/dist`）。
+
 本機可先試 production 流程：
 
 ```bash

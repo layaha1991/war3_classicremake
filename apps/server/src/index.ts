@@ -14,10 +14,9 @@ import { RedisSessionStore } from "./modules/auth/redis-session-store.js";
 import { MemoryRoomStore } from "./modules/lobby/memory-room-store.js";
 import { PostgresRoomStore } from "./modules/lobby/postgres-room-store.js";
 
-const config = loadConfig();
 const logger = createLogger();
 
-async function createStores() {
+async function createStores(config: ReturnType<typeof loadConfig>) {
   if (process.env.STORE_DRIVER === "persist") {
     const pool = new Pool({ connectionString: config.databaseUrl });
     const redis = new Redis(config.redisUrl);
@@ -36,20 +35,30 @@ async function createStores() {
   };
 }
 
-const app = await buildApp({
-  config,
-  logger,
-  stores: await createStores(),
-});
+async function main(): Promise<void> {
+  const config = loadConfig();
+  const app = await buildApp({
+    config,
+    logger,
+    stores: await createStores(config),
+  });
 
-const webRoot = fileURLToPath(new URL("../../web/dist", import.meta.url));
-if (existsSync(webRoot)) {
-  await app.register(fastifyStatic, { root: webRoot });
-  logger.info({ event: "web.static", webRoot }, "serving web on the same port as Colyseus");
+  const webRoot = fileURLToPath(new URL("../../web/dist", import.meta.url));
+  if (existsSync(webRoot)) {
+    await app.register(fastifyStatic, { root: webRoot });
+    logger.info({ event: "web.static", webRoot }, "serving web on the same port as Colyseus");
+  } else {
+    logger.warn({ event: "web.static.missing", webRoot }, "web dist missing; API and Colyseus only");
+  }
+
+  await app.ready();
+  const { attachGameServer } = await import("./game-server.js");
+  attachGameServer(app.server);
+  await app.listen({ port: config.port, host: "0.0.0.0" });
+  logger.info({ event: "server.listen", port: config.port, realtime: "colyseus" });
 }
 
-await app.ready();
-const { attachGameServer } = await import("./game-server.js");
-attachGameServer(app.server);
-await app.listen({ port: config.port, host: "0.0.0.0" });
-logger.info({ event: "server.listen", port: config.port, realtime: "colyseus" });
+main().catch((error: unknown) => {
+  logger.error({ err: error, event: "server.fatal" }, error instanceof Error ? error.message : "startup failed");
+  process.exit(1);
+});
