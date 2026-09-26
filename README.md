@@ -56,7 +56,9 @@ npx cloudflared tunnel --url http://localhost:2567
 
 1. **Deploy Logs** 搜 `JWT_SECRET`：production 一定要設，唔好用 `.env.example` 預設值。
 2. 確認 **Variables** 有 `NODE_ENV=production`、`JWT_SECRET`、`PUBLIC_WEB_ORIGIN=https://你的域名.up.railway.app`。
-3. 成功時 log 應有 `server.listen` 同 `web.static`（有 build 到 `apps/web/dist`）。
+3. 成功時 log 應有 `web.static` 同 `Server listening`（port 通常係 Railway 注入嘅 `8080`，唔係 5173）。
+4. **只保留一個 Service。** 若 log 出現 `@war3/web dev` / `vite` / `5173`，代表開錯 service 或 Start Command 係 `pnpm dev` — 刪多餘 service，Start Command 必須係 `pnpm --filter @war3/server start`。
+5. 若 server 起咗即 `SIGTERM`：多數係第二個 service/deploy 或 healthcheck；repo 已用根目錄 `Dockerfile` build，redeploy 一次。
 
 本機可先試 production 流程：
 

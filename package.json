@@ -7,6 +7,7 @@
     "build": "pnpm -r --if-present build",
     "dev": "pnpm --parallel --filter @war3/server --filter @war3/web dev",
     "build:deploy": "pnpm --filter @war3/web build",
+    "start": "pnpm --filter @war3/server start",
     "start:public": "pnpm build:deploy && pnpm --filter @war3/server start"
   },
   "engines": {
